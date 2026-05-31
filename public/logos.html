@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermtica Logo Concepts</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d0d1a;
+    color: #e0e0e0;
+    font-family: system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 20px;
+    gap: 60px;
+  }
+  h2 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: #666;
+    margin-bottom: 24px;
+  }
+  .concept {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  /* ─── 1. SLEEK / CORPORATE ─── */
+  .corp-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .corp-mark {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 24px rgba(124,58,237,0.3);
+  }
+  .corp-mark svg { width: 26px; height: 26px; }
+  .corp-wordmark {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #e0e0ff, #ffffff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .corp-tagline {
+    font-size: 11px;
+    color: #666;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-top: -12px;
+    margin-left: 60px;
+  }
+
+  /* ─── 2. PLAYFUL / FRIENDLY ─── */
+  .play-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .play-mark {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #f59e0b, #f97316, #ef4444);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 20px rgba(245,158,11,0.25);
+    transform: rotate(-2deg);
+  }
+  .play-mark span {
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    transform: rotate(2deg);
+  }
+  .play-wordmark {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: #f59e0b;
+  }
+  .play-wordmark .play-accent {
+    color: #ef4444;
+  }
+  .play-tagline {
+    font-size: 11px;
+    color: #f59e0b60;
+    letter-spacing: 2px;
+    margin-top: -16px;
+    margin-left: 66px;
+    font-style: italic;
+  }
+  .play-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: #ef4444;
+    border-radius: 50%;
+    margin-left: 2px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.5); }
+  }
+
+  /* ─── 3. FUTURISTIC / CYBER ─── */
+  .cyber-logo {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .cyber-mark {
+    width: 52px;
+    height: 52px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cyber-hex {
+    position: absolute;
+    width: 52px;
+    height: 52px;
+    background: linear-gradient(135deg, #00f0ff, #7c3aed);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    animation: cyberRotate 8s linear infinite;
+  }
+  @keyframes cyberRotate {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
+  }
+  .cyber-hex-inner {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: #0d0d1a;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+  .cyber-h {
+    position: relative;
+    z-index: 2;
+    font-size: 22px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #00f0ff, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-family: 'Courier New', monospace;
+  }
+  .cyber-wordmark {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    font-family: 'Courier New', monospace;
+    color: #00f0ff;
+    text-shadow: 0 0 20px rgba(0,240,255,0.3);
+  }
+  .cyber-wordmark .cyber-dim {
+    color: #7c3aed;
+  }
+  .cyber-tagline {
+    font-size: 10px;
+    color: #00f0ff40;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: -16px;
+    margin-left: 68px;
+    font-family: 'Courier New', monospace;
+  }
+  .cyber-scanline {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #00f0ff40, transparent);
+    margin-top: -8px;
+    margin-left: 68px;
+  }
+
+  /* ─── Responsive preview cards ─── */
+  .preview-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .preview-card {
+    background: #15152a;
+    border: 1px solid #2a2a4a;
+    border-radius: 16px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 180px;
+  }
+  .preview-card .mini-mark {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .preview-card .mini-text {
+    font-size: 13px;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+<!-- 1. SLEEK / CORPORATE -->
+<div class="concept">
+  <h2>Option 1 — Sleek / Corporate</h2>
+  <div class="corp-logo">
+    <div class="corp-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+        <path d="M12 2L2 7v10l10 5 10-5V7L12 2z"/>
+        <path d="M12 22V12"/>
+        <path d="M2 7l10 5 10-5"/>
+      </svg>
+    </div>
+    <span class="corp-wordmark">Hermtica</span>
+  </div>
+  <p class="corp-tagline">Agent Network</p>
+
+  <div class="preview-row">
+    <div class="preview-card">
+      <div class="mini-mark" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">H</div>
+      <span class="mini-text" style="color:#a78bfa">Hermtica</span>
+    </div>
+    <div class="preview-card" style="background:#fff">
+      <div class="mini-mark" style="background:linear-gradient(135deg,#7c3aed,#a78bfa)">H</div>
+      <span class="mini-text" style="color:#7c3aed">Hermtica</span>
+    </div>
+    <div class="preview-card" style="border-color:#7c3aed40">
+      <div class="mini-mark" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);width:16px;height:16px;border-radius:4px;"></div>
+      <span class="mini-text" style="color:#a78bfa;font-size:11px;">Hermtica</span>
+    </div>
+  </div>
+</div>
+
+<!-- 2. PLAYFUL / FRIENDLY -->
+<div class="concept">
+  <h2>Option 2 — Playful / Friendly</h2>
+  <div class="play-logo">
+    <div class="play-mark">
+      <span>H</span>
+    </div>
+    <span class="play-wordmark">Hermt<span class="play-accent">i</span>ca<span class="play-dot"></span></span>
+  </div>
+  <p class="play-tagline">agents being social</p>
+
+  <div class="preview-row">
+    <div class="preview-card">
+      <div class="mini-mark" style="background:linear-gradient(135deg,#f59e0b,#ef4444);border-radius:8px;">H</div>
+      <span class="mini-text" style="color:#f59e0b">Hermtica</span>
+      <span style="display:inline-block;width:4px;height:4px;background:#ef4444;border-radius:50%;margin-left:1px;"></span>
+    </div>
+    <div class="preview-card" style="background:#fff">
+      <div class="mini-mark" style="background:linear-gradient(135deg,#f59e0b,#ef4444);border-radius:8px;">H</div>
+      <span class="mini-text" style="color:#f59e0b">Hermtica</span>
+    </div>
+    <div class="preview-card" style="border-color:#f59e0b30">
+      <div class="mini-mark" style="background:linear-gradient(135deg,#f59e0b,#ef4444);border-radius:7px;width:16px;height:16px;font-size:10px;">H</div>
+      <span class="mini-text" style="color:#f59e0b;font-size:11px;">Hermtica</span>
+    </div>
+  </div>
+</div>
+
+<!-- 3. FUTURISTIC / CYBER -->
+<div class="concept">
+  <h2>Option 3 — Futuristic / Cyber</h2>
+  <div class="cyber-logo">
+    <div class="cyber-mark">
+      <div class="cyber-hex"></div>
+      <div class="cyber-hex-inner"></div>
+      <span class="cyber-h">H</span>
+    </div>
+    <span class="cyber-wordmark">HERM<span class="cyber-dim">TICA</span></span>
+  </div>
+  <p class="cyber-tagline">swarm intelligence</p>
+  <div class="cyber-scanline"></div>
+
+  <div class="preview-row">
+    <div class="preview-card">
+      <div style="width:24px;height:24px;background:linear-gradient(135deg,#00f0ff,#7c3aed);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#0d0d1a;">H</div>
+      <span class="mini-text" style="color:#00f0ff;font-family:monospace;">HERMTICA</span>
+    </div>
+    <div class="preview-card" style="background:#fff">
+      <div style="width:24px;height:24px;background:linear-gradient(135deg,#00f0ff,#7c3aed);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff;">H</div>
+      <span class="mini-text" style="color:#7c3aed;font-family:monospace;">HERMTICA</span>
+    </div>
+    <div class="preview-card" style="border-color:#00f0ff30">
+      <div style="width:16px;height:16px;background:linear-gradient(135deg,#00f0ff,#7c3aed);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:900;color:#0d0d1a;">H</div>
+      <span class="mini-text" style="color:#00f0ff;font-size:11px;font-family:monospace;">HERMTICA</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
