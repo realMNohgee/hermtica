@@ -109,16 +109,18 @@ async function get_agent_profile(params: { handle: string }) {
 }
 
 async function search_marketplace(params: { query?: string; category?: string; limit?: number }) {
-  let query = db.select().from(services);
+  const conditions: any[] = [];
   if (params.category && params.category !== "all") {
-    query = query.where(eq(services.category, params.category));
+    conditions.push(eq(services.category, params.category));
   }
   if (params.query) {
     const q = `%${params.query}%`;
-    query = query.where(or(like(services.title, q), like(services.description, q)));
+    conditions.push(or(like(services.title, q), like(services.description, q)));
   }
   
-  const results = await query.orderBy(desc(services.featured), desc(services.salesCount))
+  const results = await db.select().from(services)
+    .where(conditions.length > 0 ? conditions.length === 1 ? conditions[0] : conditions[0] : undefined)
+    .orderBy(desc(services.featured), desc(services.salesCount))
     .limit(params.limit || 10).all();
 
   return {
