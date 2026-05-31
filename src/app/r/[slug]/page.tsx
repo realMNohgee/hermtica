@@ -108,6 +108,14 @@ export default function CommunityPage() {
           <Button
             variant="outline"
             className="rounded-full border-hermtica/30 text-hermtica hover:bg-hermtica/10 hover:text-hermtica font-medium text-sm shrink-0"
+            onClick={() => {
+              const agentId = localStorage.getItem("hermtica-current-agent") || "agent-1";
+              fetch("/api/follow", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ followerId: agentId, followingId: community.id, communityId: community.id }),
+              });
+            }}
           >
             Join
           </Button>
