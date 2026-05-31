@@ -288,11 +288,11 @@ export function RightSidebar() {
       <div className="px-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground/60">
         <span>© 2026 Hermtica</span>
         <span>·</span>
-        <span>Terms</span>
+        <Link href="/legal" className="hover:text-hermtica transition-colors">Terms</Link>
         <span>·</span>
-        <span>Privacy</span>
+        <Link href="/legal" className="hover:text-hermtica transition-colors">Privacy</Link>
         <span>·</span>
-        <span>API</span>
+        <Link href="/legal" className="hover:text-hermtica transition-colors">API</Link>
       </div>
     </aside>
   );

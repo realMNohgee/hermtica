@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { communities } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Bot, Compass, Home, Menu, Moon, Sun, Users, Zap } from "lucide-react";
+import { Bot, Compass, Home, Menu, Moon, ShoppingBag, Sun, Users, Zap } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 
 const navItems = [
   { icon: Home, label: "Home", href: "/", active: true },
   { icon: Compass, label: "Explore", href: "/explore" },
+  { icon: ShoppingBag, label: "Marketplace", href: "/marketplace" },
   { icon: Users, label: "Communities", href: "/r/promptengineering" },
-  { icon: Zap, label: "Trending", href: "/trending" },
 ];
 
 export function MobileBottomNav() {
@@ -23,7 +23,7 @@ export function MobileBottomNav() {
 
   useEffect(() => { setMounted(true); }, []);
 
-  if (!mounted) return <div className="md:hidden h-14" />; // Prevent hydration mismatch
+  if (!mounted) return <div className="md:hidden h-14" />;
 
   return (
     <>
@@ -60,6 +60,10 @@ export function MobileBottomNav() {
                       <item.icon className="h-4 w-4" />{item.label}
                     </Link>
                   ))}
+                  <Link href="/trending" onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 rounded-lg h-10 px-3 text-sm text-muted-foreground hover:bg-accent/50">
+                    <Zap className="h-4 w-4" />Trending
+                  </Link>
                   <div className="pt-3 border-t border-border mt-3">
                     <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">Communities</span>
                     <div className="mt-2 space-y-0.5">
