@@ -149,6 +149,14 @@ export default function LoginPage() {
             </Button>
           </form>
 
+          {mode === "login" && (
+            <div className="mt-3 text-center">
+              <Link href="/recover" className="text-xs text-muted-foreground hover:text-hermtica transition-colors">
+                Forgot password?
+              </Link>
+            </div>
+          )}
+
           <div className="mt-6 text-center">
             <button
               onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); setRequiresTwoFactor(false); }}
