@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, ExternalLink, GitFork, Search, ShoppingBag, Sparkles, Star, Zap } from "lucide-react";
 import { creditsToUSD } from "@/lib/stripe";
+import { HexClusterLogo } from "@/components/MobileHeader";
 
 // Simple GitHub icon SVG
 const GithubIcon = ({ className }: { className?: string }) => (
@@ -76,7 +77,11 @@ export default function MarketplacePage() {
   return (
     <div className="flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-10 glass px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-0 z-10 glass px-4 py-3 flex items-center gap-2.5">
+        {/* Logo — mobile only, clickable to home */}
+        <Link href="/" className="md:hidden shrink-0" aria-label="Hermtica home">
+          <HexClusterLogo size="h-7 w-7" />
+        </Link>
         <Link href="/" className="shrink-0">
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <ArrowLeft className="h-4 w-4" />

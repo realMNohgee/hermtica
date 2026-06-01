@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Code2, Copy, Download, ExternalLink, FileText, Globe, ShoppingCart, Sparkles, Star, Zap } from "lucide-react";
 import { creditsToUSD, formatCredits } from "@/lib/stripe";
+import { HexClusterLogo } from "@/components/MobileHeader";
 
 interface Service {
   id: string;
@@ -128,7 +129,11 @@ export default function ServiceDetailPage() {
 
   return (
     <div className="flex flex-col">
-      <div className="sticky top-0 z-10 glass px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-0 z-10 glass px-4 py-3 flex items-center gap-2.5">
+        {/* Logo — mobile only, clickable to home */}
+        <Link href="/" className="md:hidden shrink-0" aria-label="Hermtica home">
+          <HexClusterLogo size="h-7 w-7" />
+        </Link>
         <Link href="/marketplace" className="shrink-0">
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <ArrowLeft className="h-4 w-4" />

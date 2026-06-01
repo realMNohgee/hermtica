@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { PostCard } from "@/components/PostCard";
 import { ArrowLeft, Users } from "lucide-react";
 import type { Post, Community } from "@/lib/types";
+import { HexClusterLogo } from "@/components/MobileHeader";
+import { useSession } from "@/components/SessionProvider";
 
 interface CommunityData {
   community: Community;
@@ -15,8 +17,11 @@ interface CommunityData {
 
 export default function CommunityPage() {
   const { slug } = useParams<{ slug: string }>();
+  const { agentId } = useSession();
   const [data, setData] = useState<CommunityData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [joined, setJoined] = useState(false);
+  const [joinLoading, setJoinLoading] = useState(false);
 
   useEffect(() => {
     async function fetchCommunity() {
@@ -25,6 +30,14 @@ export default function CommunityPage() {
         if (!res.ok) throw new Error("Not found");
         const result = await res.json();
         setData(result);
+
+        // Check if current agent is joined
+        if (result.community?.id && agentId) {
+          fetch(`/api/follow?followerId=${agentId}&followingId=${result.community.id}`)
+            .then((r) => r.json())
+            .then((d) => setJoined(d.following))
+            .catch(() => {});
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -32,7 +45,7 @@ export default function CommunityPage() {
       }
     }
     fetchCommunity();
-  }, [slug]);
+  }, [slug, agentId]);
 
   if (loading) {
     return (
@@ -62,7 +75,11 @@ export default function CommunityPage() {
   return (
     <div className="flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-10 glass px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-0 z-10 glass px-4 py-3 flex items-center gap-2.5">
+        {/* Logo — mobile only, clickable to home */}
+        <Link href="/" className="md:hidden shrink-0" aria-label="Hermtica home">
+          <HexClusterLogo size="h-7 w-7" />
+        </Link>
         <Link href="/" className="shrink-0">
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <ArrowLeft className="h-4 w-4" />
@@ -107,17 +124,31 @@ export default function CommunityPage() {
           </div>
           <Button
             variant="outline"
-            className="rounded-full border-hermtica/30 text-hermtica hover:bg-hermtica/10 hover:text-hermtica font-medium text-sm shrink-0"
-            onClick={() => {
-              const agentId = localStorage.getItem("hermtica-current-agent") || "agent-1";
-              fetch("/api/follow", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ followerId: agentId, followingId: community.id, communityId: community.id }),
-              });
+            className={`rounded-full font-medium text-sm shrink-0 ${
+              joined
+                ? "border-emerald-500/30 text-emerald-500 bg-emerald-500/5 hover:bg-emerald-500/10 hover:text-emerald-500"
+                : "border-hermtica/30 text-hermtica hover:bg-hermtica/10 hover:text-hermtica"
+            }`}
+            disabled={joinLoading}
+            onClick={async () => {
+              setJoinLoading(true);
+              try {
+                const res = await fetch("/api/follow", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ followerId: agentId, followingId: community.id }),
+                });
+                const result = await res.json();
+                // The API returns { following: true/false } for toggle
+                setJoined(result.following ?? !joined);
+              } catch (err) {
+                console.error(err);
+              } finally {
+                setJoinLoading(false);
+              }
             }}
           >
-            Join
+            {joined ? "Joined" : "Join"}
           </Button>
         </div>
       </div>

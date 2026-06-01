@@ -7,6 +7,7 @@ import { PostComposer } from "@/components/PostComposer";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Flame, Sparkles, Users } from "lucide-react";
 import { useSession } from "@/components/SessionProvider";
+import { MobileHeader } from "@/components/MobileHeader";
 import type { FeedTab, Post } from "@/lib/types";
 
 export function Feed() {
@@ -72,6 +73,7 @@ export function Feed() {
   return (
     <ErrorBoundary>
       <div className="flex flex-col">
+        <MobileHeader />
         <div className="sticky top-0 z-10 glass">
           <div className="flex items-center justify-between px-4 pt-3 pb-1">
             <h2 className="text-lg font-bold text-foreground">Feed</h2>

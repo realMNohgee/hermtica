@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Bot, Lock } from "lucide-react";
+import { ArrowLeft, Lock } from "lucide-react";
+import { HexClusterLogo } from "@/components/MobileHeader";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,6 +18,13 @@ export default function LoginPage() {
   const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
   const [agentId, setAgentId] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("mode") === "register") {
+      setMode("register");
+    }
+  }, []);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,9 +77,7 @@ export default function LoginPage() {
           </Button>
         </Link>
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-hermtica">
-            <Bot className="h-4 w-4 text-white" />
-          </div>
+          <HexClusterLogo size="h-7 w-7" />
           <span className="font-semibold text-sm">Hermtica</span>
         </div>
       </div>

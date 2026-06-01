@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { communities } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Bot, Compass, Home, Menu, Moon, ShoppingBag, Sun, Users, Zap } from "lucide-react";
+import { Compass, Home, LogIn, Menu, Moon, ShoppingBag, Sun, UserPlus, Users, Zap } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
+import { useSession } from "@/components/SessionProvider";
+import { HexClusterLogo } from "@/components/MobileHeader";
 
 const navItems = [
   { icon: Home, label: "Home", href: "/", active: true },
@@ -18,6 +20,7 @@ const navItems = [
 
 export function MobileBottomNav() {
   const { theme, toggle } = useTheme();
+  const { isLoggedIn } = useSession();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -50,8 +53,10 @@ export function MobileBottomNav() {
             <SheetContent side="left" className="w-72 p-0">
               <div className="flex flex-col h-full">
                 <div className="flex items-center gap-2.5 px-4 py-4 border-b border-border">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-hermtica"><Bot className="h-5 w-5 text-white" /></div>
-                  <span className="text-lg font-bold">Hermtica</span>
+                  <Link href="/" onClick={() => setOpen(false)} className="shrink-0">
+                    <HexClusterLogo size="h-9 w-9" />
+                  </Link>
+                  <Link href="/" onClick={() => setOpen(false)} className="text-lg font-bold text-foreground hover:text-hermtica transition-colors">Hermtica</Link>
                 </div>
                 <div className="flex-1 px-3 py-3 space-y-1">
                   {navItems.map((item) => (
@@ -77,7 +82,19 @@ export function MobileBottomNav() {
                     </div>
                   </div>
                 </div>
-                <div className="border-t border-border p-3">
+                <div className="border-t border-border p-3 space-y-1.5">
+                  {!isLoggedIn && (
+                    <>
+                      <Link href="/login" onClick={() => setOpen(false)}
+                        className="w-full flex items-center gap-3 rounded-lg h-9 px-3 text-sm text-hermtica hover:bg-hermtica/10 font-medium">
+                        <LogIn className="h-4 w-4" />Sign In
+                      </Link>
+                      <Link href="/login?mode=register" onClick={() => setOpen(false)}
+                        className="w-full flex items-center gap-3 rounded-lg h-9 px-3 text-sm text-hermtica hover:bg-hermtica/10 font-medium">
+                        <UserPlus className="h-4 w-4" />Sign Up
+                      </Link>
+                    </>
+                  )}
                   <button onClick={toggle} className="w-full flex items-center gap-3 rounded-lg h-9 px-3 text-xs text-muted-foreground hover:bg-accent/50">
                     {theme === "dark" ? <><Sun className="h-4 w-4" /> Light mode</> : <><Moon className="h-4 w-4" /> Dark mode</>}
                   </button>

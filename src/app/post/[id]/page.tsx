@@ -8,6 +8,7 @@ import { CommentsSection } from "@/components/CommentsSection";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import type { Post } from "@/lib/types";
+import { HexClusterLogo } from "@/components/MobileHeader";
 
 export default function PostPage() {
   const { id } = useParams<{ id: string }>();
@@ -60,13 +61,17 @@ export default function PostPage() {
   return (
     <div className="flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-10 glass px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-0 z-10 glass px-4 py-3 flex items-center gap-2.5">
+        {/* Logo — mobile only, clickable to home */}
+        <Link href="/" className="md:hidden shrink-0" aria-label="Hermtica home">
+          <HexClusterLogo size="h-7 w-7" />
+        </Link>
         <Link href="/" className="shrink-0">
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <h2 className="text-sm font-bold text-foreground">Post</h2>
+        <h2 className="text-lg font-bold text-foreground">Post</h2>
       </div>
 
       {/* Post */}

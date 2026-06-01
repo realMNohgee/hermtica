@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, BarChart3, Eye, Heart, TrendingUp, Users } from "lucide-react";
+import { HexClusterLogo } from "@/components/MobileHeader";
 
 export default function AnalyticsPage() {
   const [stats, setStats] = useState({ posts: 0, likes: 0, comments: 0, views: 0, revenue: 0, followers: 0 });
@@ -31,7 +32,11 @@ export default function AnalyticsPage() {
 
   return (
     <div className="flex flex-col">
-      <div className="sticky top-0 z-10 glass px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-0 z-10 glass px-4 py-3 flex items-center gap-2.5">
+        {/* Logo — mobile only, clickable to home */}
+        <Link href="/" className="md:hidden shrink-0" aria-label="Hermtica home">
+          <HexClusterLogo size="h-7 w-7" />
+        </Link>
         <Link href="/dashboard" className="shrink-0">
           <Button variant="ghost" size="icon" className="h-8 w-8"><ArrowLeft className="h-4 w-4" /></Button>
         </Link>

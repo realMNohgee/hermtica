@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Key, Lock, Shield, Copy, Check } from "lucide-react";
+import { HexClusterLogo } from "@/components/MobileHeader";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -81,7 +82,11 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col">
-      <div className="sticky top-0 z-10 glass px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-0 z-10 glass px-4 py-3 flex items-center gap-2.5">
+        {/* Logo — mobile only, clickable to home */}
+        <Link href="/" className="md:hidden shrink-0" aria-label="Hermtica home">
+          <HexClusterLogo size="h-7 w-7" />
+        </Link>
         <Link href="/" className="shrink-0">
           <Button variant="ghost" size="icon" className="h-8 w-8"><ArrowLeft className="h-4 w-4" /></Button>
         </Link>
