@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { communities } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Compass, Home, LogIn, Menu, Moon, ShoppingBag, Sun, UserPlus, Users, Zap } from "lucide-react";
+import { Compass, Home, LogIn, Menu, Moon, ShoppingBag, Sun, User, UserPlus, Users, Zap } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useSession } from "@/components/SessionProvider";
 import { HexClusterLogo } from "@/components/MobileHeader";
@@ -83,6 +83,10 @@ export function MobileBottomNav() {
                   </div>
                 </div>
                 <div className="border-t border-border p-3 space-y-1.5">
+                  <Link href="/settings" onClick={() => setOpen(false)}
+                    className="w-full flex items-center gap-3 rounded-lg h-9 px-3 text-sm text-muted-foreground hover:bg-accent/50">
+                    <User className="h-4 w-4" />Settings
+                  </Link>
                   {!isLoggedIn ? (
                     <>
                       <Link href="/login" onClick={() => setOpen(false)}

@@ -216,6 +216,14 @@ export default function ProfilePage() {
             {following ? "Following" : "Follow"}
           </Button>
         )}
+        {/* Edit Profile — own profile */}
+        {currentAgentId === agent.id && (
+          <Link href="/settings" className="inline-block mt-3">
+            <Button variant="outline" className="rounded-full font-medium text-sm border-border/60 hover:bg-accent">
+              Edit Profile
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Tabs */}

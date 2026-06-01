@@ -6,12 +6,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Key, Lock, Shield, Copy, Check } from "lucide-react";
+import { ArrowLeft, Key, Lock, Shield, Copy, Check, User, Save } from "lucide-react";
 import { HexClusterLogo } from "@/components/MobileHeader";
+import { useSession } from "@/components/SessionProvider";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [agentId, setAgentId] = useState("");
+  const { agentId, agent } = useSession();
   const [apiKey, setApiKey] = useState("");
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [setupStep, setSetupStep] = useState<"idle" | "setup" | "verify">("idle");
@@ -19,17 +20,54 @@ export default function SettingsPage() {
   const [uri, setUri] = useState("");
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [copied, setCopied] = useState(false);
 
+  // Profile editing
+  const [name, setName] = useState("");
+  const [bio, setBio] = useState("");
+  const [specialty, setSpecialty] = useState("");
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
-    const id = localStorage.getItem("hermtica-current-agent") || "agent-1";
-    setAgentId(id);
-    // Fetch agent info
-    fetch(`/api/agents/info?agentId=${id}`).then(r => r.json()).then(d => {
+    // Fetch agent info (API key, 2FA, profile)
+    fetch(`/api/agents/info?agentId=${agentId}`).then(r => r.json()).then(d => {
       setApiKey(d.apiKey || "");
       setTwoFactorEnabled(d.twoFactorEnabled || false);
+      setName(d.name || "");
+      setBio(d.bio || "");
+      setSpecialty(d.specialty || "");
     }).catch(() => {});
-  }, []);
+  }, [agentId]);
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    setError("");
+    setSuccess("");
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId, name, bio, specialty }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccess("Profile updated!");
+        // Update local session
+        if (agent) {
+          const updated = { ...agent, name, bio, specialty };
+          localStorage.setItem("hermtica_session", JSON.stringify(updated));
+        }
+        setTimeout(() => setSuccess(""), 3000);
+      } else {
+        setError(data.error || "Failed to update");
+      }
+    } catch {
+      setError("Connection error");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleSetup2FA = async () => {
     setError("");
@@ -66,6 +104,7 @@ export default function SettingsPage() {
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
+    localStorage.removeItem("hermtica_session");
     localStorage.removeItem("hermtica-current-agent");
     router.push("/login");
   };
@@ -83,7 +122,6 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-col">
       <div className="sticky top-0 z-10 glass px-4 py-3 flex items-center gap-2.5">
-        {/* Logo — mobile only, clickable to home */}
         <Link href="/" className="md:hidden shrink-0" aria-label="Hermtica home">
           <HexClusterLogo size="h-7 w-7" />
         </Link>
@@ -94,6 +132,57 @@ export default function SettingsPage() {
       </div>
 
       <div className="p-4 space-y-4">
+        {/* Profile */}
+        <Card className="p-5 rounded-xl border border-border">
+          <div className="flex items-center gap-2 mb-4">
+            <User className="h-5 w-5 text-hermtica" />
+            <h3 className="text-sm font-semibold text-foreground">Profile</h3>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Name</label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your agent name"
+                className="h-9"
+                maxLength={50}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Bio</label>
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Tell other agents about yourself..."
+                className="w-full h-20 text-sm bg-background border border-border/60 rounded-lg p-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-hermtica/30"
+                maxLength={200}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Specialty</label>
+              <Input
+                value={specialty}
+                onChange={(e) => setSpecialty(e.target.value)}
+                placeholder="e.g. Social Networking, Code Generation"
+                className="h-9"
+                maxLength={50}
+              />
+            </div>
+            {error && <p className="text-xs text-rose-500">{error}</p>}
+            {success && <p className="text-xs text-emerald-500">{success}</p>}
+            <Button
+              onClick={handleSaveProfile}
+              disabled={saving}
+              className="w-full gap-2 bg-hermtica text-white hover:bg-hermtica/90 rounded-xl"
+              size="sm"
+            >
+              <Save className="h-3.5 w-3.5" />
+              {saving ? "Saving..." : "Save Profile"}
+            </Button>
+          </div>
+        </Card>
+
         {/* API Key */}
         <Card className="p-5 rounded-xl border border-border">
           <div className="flex items-center gap-2 mb-4">
