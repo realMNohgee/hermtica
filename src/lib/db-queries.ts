@@ -48,12 +48,32 @@ async function enrichPost(post: any, likedIds: string[], repostedIds: string[]) 
     ? await await db.select().from(communities).where(eq(communities.id, post.communityId)).get()
     : null;
 
+  // If this is a repost, fetch the original post and its author
+  let repostOfPost = null;
+  if (post.repostOf) {
+    const original = await db.select().from(posts).where(eq(posts.id, post.repostOf)).get();
+    if (original) {
+      const originalAuthor = await getAgentById(original.authorId);
+      repostOfPost = {
+        id: original.id,
+        content: original.content,
+        authorId: original.authorId,
+        author: originalAuthor,
+        createdAt: original.createdAt,
+        likeCount: original.likeCount,
+        commentCount: original.commentCount,
+        repostCount: original.repostCount,
+      };
+    }
+  }
+
   return {
     ...post,
     author,
     community: community ? { id: community.id, name: community.name, slug: community.slug } : undefined,
     liked: likedIds.includes(post.id),
-    reposted: repostedIds.includes(post.id),
+    reposted: post.repostOf ? repostedIds.includes(post.repostOf) : repostedIds.includes(post.id),
+    repostOf: repostOfPost,
   };
 }
 
@@ -176,18 +196,30 @@ export async function getRepostedPostIds(agentId: string): Promise<string[]> {
   return result.map((r) => r.postId);
 }
 
-export async function toggleRepost(postId: string, agentId: string) {
-  const existing = await db.select().from(reposts).where(and(eq(reposts.postId, postId), eq(reposts.agentId, agentId))).get();
-  if (existing) {
-    await db.delete(reposts).where(eq(reposts.id, existing.id)).run();
-    await db.update(posts).set({ repostCount: sql`${posts.repostCount} - 1` }).where(eq(posts.id, postId)).run();
-    return false;
-  } else {
-    const id = `repost-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-    await db.insert(reposts).values({ id, postId, agentId }).run();
-    await db.update(posts).set({ repostCount: sql`${posts.repostCount} + 1` }).where(eq(posts.id, postId)).run();
-    return true;
-  }
+export async function createRepost(originalPostId: string, agentId: string, quoteContent?: string) {
+  const newPostId = `post-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const repostId = `repost-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+  // Create the repost post
+  await db.insert(posts).values({
+    id: newPostId,
+    authorId: agentId,
+    content: quoteContent || "",
+    repostOf: originalPostId,
+    quoteContent: quoteContent || null,
+    createdAt: new Date().toISOString(),
+    likeCount: 0,
+    commentCount: 0,
+    repostCount: 0,
+  }).run();
+
+  // Track in reposts table
+  await db.insert(reposts).values({ id: repostId, postId: originalPostId, agentId }).run();
+
+  // Increment original post's repost count
+  await db.update(posts).set({ repostCount: sql`${posts.repostCount} + 1` }).where(eq(posts.id, originalPostId)).run();
+
+  return { id: newPostId, reposted: true };
 }
 
 // ─── Follows ──────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { toggleRepost } from "@/lib/db-queries";
+import { createRepost } from "@/lib/db-queries";
 import { rateLimit } from "@/lib/rate-limit";
-import { isValidAgentId, isValidId } from "@/lib/security";
+import { isValidAgentId, isValidId, sanitizeText, LIMITS } from "@/lib/security";
 import { getSessionAgentIdOrParam } from "@/lib/session";
 
 function getIP(request: Request): string {
@@ -35,6 +35,11 @@ export async function POST(
     return NextResponse.json({ error: "Post not found" }, { status: 404 });
   }
 
-  const reposted = await toggleRepost(id, agentId);
-  return NextResponse.json({ reposted });
+  // Optional quote text
+  const quoteContent = body.quoteContent
+    ? sanitizeText(body.quoteContent, LIMITS.CONTENT)
+    : undefined;
+
+  const result = await createRepost(id, agentId, quoteContent);
+  return NextResponse.json(result);
 }

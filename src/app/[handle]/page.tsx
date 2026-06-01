@@ -245,10 +245,13 @@ export default function ProfilePage() {
             const res = await fetch(`/api/posts/${postId}/like`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agentId: currentAgentId }) });
             const { liked } = await res.json();
             setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, liked, likeCount: liked ? p.likeCount + 1 : p.likeCount - 1 } : p));
-          }} onRepost={async (postId) => {
-            const res = await fetch(`/api/posts/${postId}/repost`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agentId: currentAgentId }) });
-            const { reposted } = await res.json();
-            setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, reposted, repostCount: reposted ? p.repostCount + 1 : p.repostCount - 1 } : p));
+          }} onRepost={async (_postId: string) => {
+            // Refetch since repost creates a new post
+            const res = await fetch(`/api/agents/${handle}`);
+            if (res.ok) {
+              const data = await res.json();
+              setPosts(data.posts);
+            }
           }} />
         ))}
       </div>

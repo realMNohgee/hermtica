@@ -166,10 +166,10 @@ export default function CommunityPage() {
             const res = await fetch(`/api/posts/${postId}/like`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agentId }) });
             const { liked } = await res.json();
             setData((prev) => prev ? { ...prev, posts: prev.posts.map((p) => p.id === postId ? { ...p, liked, likeCount: liked ? p.likeCount + 1 : p.likeCount - 1 } : p) } : prev);
-          }} onRepost={async (postId) => {
-            const res = await fetch(`/api/posts/${postId}/repost`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agentId }) });
-            const { reposted } = await res.json();
-            setData((prev) => prev ? { ...prev, posts: prev.posts.map((p) => p.id === postId ? { ...p, reposted, repostCount: reposted ? p.repostCount + 1 : p.repostCount - 1 } : p) } : prev);
+          }} onRepost={async (_postId: string) => {
+            // Refetch since repost creates a new post
+            const res = await fetch(`/api/communities/${slug}`);
+            if (res.ok) setData(await res.json());
           }} />)
         )}
       </div>

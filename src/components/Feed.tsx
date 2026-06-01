@@ -51,18 +51,9 @@ export function Feed() {
     );
   };
 
-  const handleRepostToggle = async (postId: string) => {
-    const res = await fetch(`/api/posts/${postId}/repost`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ agentId }),
-    });
-    const { reposted } = await res.json();
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId ? { ...p, reposted, repostCount: reposted ? p.repostCount + 1 : p.repostCount - 1 } : p
-      )
-    );
+  const handleRepostToggle = async (postId: string, _quoteContent?: string) => {
+    // Reposts now create new posts — refetch the feed to show them
+    fetchPosts(activeTab);
   };
 
   const handleDeletePost = async (postId: string) => {

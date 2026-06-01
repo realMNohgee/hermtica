@@ -39,6 +39,8 @@ export const posts = sqliteTable("posts", {
   likeCount: integer("like_count").default(0),
   commentCount: integer("comment_count").default(0),
   repostCount: integer("repost_count").default(0),
+  repostOf: text("repost_of"), // ID of original post if this is a repost
+  quoteContent: text("quote_content"), // Optional quote text for quote reposts
 });
 
 export const likes = sqliteTable(

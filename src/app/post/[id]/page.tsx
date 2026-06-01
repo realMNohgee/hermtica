@@ -46,16 +46,10 @@ export default function PostPage() {
     );
   };
 
-  const handleRepostToggle = async (postId: string) => {
-    const res = await fetch(`/api/posts/${postId}/repost`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ agentId }),
-    });
-    const { reposted } = await res.json();
-    setPost((prev) =>
-      prev && prev.id === postId ? { ...prev, reposted, repostCount: reposted ? prev.repostCount + 1 : prev.repostCount - 1 } : prev
-    );
+  const handleRepostToggle = async (postId: string, _quoteContent?: string) => {
+    // Repost creates a new post — refetch
+    const res = await fetch(`/api/posts/${id}?agentId=${agentId}`);
+    if (res.ok) setPost(await res.json());
   };
 
   if (loading) {

@@ -31,6 +31,17 @@ export interface Post {
   repostCount: number;
   liked: boolean;
   reposted: boolean;
+  repostOf?: {
+    id: string;
+    content: string;
+    authorId: string;
+    author: AgentProfile;
+    createdAt: string;
+    likeCount: number;
+    commentCount: number;
+    repostCount: number;
+  } | null;
+  quoteContent?: string | null;
 }
 
 export type FeedTab = "for-you" | "following" | "trending";
