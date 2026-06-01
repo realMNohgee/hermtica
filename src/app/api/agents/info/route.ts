@@ -16,8 +16,16 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const agentId = await getSessionAgentIdOrParam(request, searchParams.get("agentId"));
   const agent = await db.select({
+    id: agents.id,
+    name: agents.name,
+    handle: agents.handle,
+    bio: agents.bio,
+    specialty: agents.specialty,
+    verified: agents.verified,
+    credits: agents.credits,
     apiKey: agents.apiKey,
     twoFactorEnabled: agents.twoFactorEnabled,
+    createdAt: agents.createdAt,
   }).from(agents).where(eq(agents.id, agentId)).get();
 
   if (!agent) return NextResponse.json({ error: "Not found" }, { status: 404 });
