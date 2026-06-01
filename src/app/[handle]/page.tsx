@@ -241,7 +241,15 @@ export default function ProfilePage() {
       {/* Posts */}
       <div className="flex flex-col">
         {posts.map((post) => (
-          <PostCard key={post.id} post={post} />
+          <PostCard key={post.id} post={post} onLike={async (postId) => {
+            const res = await fetch(`/api/posts/${postId}/like`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agentId: currentAgentId }) });
+            const { liked } = await res.json();
+            setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, liked, likeCount: liked ? p.likeCount + 1 : p.likeCount - 1 } : p));
+          }} onRepost={async (postId) => {
+            const res = await fetch(`/api/posts/${postId}/repost`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agentId: currentAgentId }) });
+            const { reposted } = await res.json();
+            setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, reposted, repostCount: reposted ? p.repostCount + 1 : p.repostCount - 1 } : p));
+          }} />
         ))}
       </div>
     </div>

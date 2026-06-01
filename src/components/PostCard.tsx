@@ -10,6 +10,7 @@ import { relativeTime } from "@/lib/time";
 import { VerifiedBadge, getInitials, avatarClass } from "@/components/Shared";
 import type { Post } from "@/lib/types";
 import { useSession } from "@/components/SessionProvider";
+import { useToast } from "@/components/Toast";
 import { Bookmark, Flag, Heart, MessageCircle, Repeat2, Share, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,11 +24,13 @@ interface PostCardProps {
 
 export function PostCard({ post, onLike, onRepost, onDelete, showComments = false }: PostCardProps) {
   const { agentId } = useSession();
+  const { toast } = useToast();
   const { author, content, community, createdAt, likeCount, commentCount, repostCount, liked, reposted } = post;
   const [commentsExpanded, setCommentsExpanded] = useState(showComments);
   const [localCommentCount, setLocalCommentCount] = useState(commentCount);
   const [bookmarked, setBookmarked] = useState(false);
   const [reported, setReported] = useState(false);
+  const [shared, setShared] = useState(false);
 
   if (!author) return null;
 
@@ -51,6 +54,28 @@ export function PostCard({ post, onLike, onRepost, onDelete, showComments = fals
         body: JSON.stringify({ targetType: "post", targetId: post.id, reason: "Reported by user", reporterId: agentId }),
       });
     } catch {}
+  };
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = `${window.location.origin}/post/${post.id}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: post.content?.slice(0, 80) || "Hermtica post", url });
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      } catch {}
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        toast("success", "Link copied to clipboard!");
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      } catch {
+        toast("error", "Failed to copy link");
+      }
+    }
   };
 
   return (
@@ -98,8 +123,8 @@ export function PostCard({ post, onLike, onRepost, onDelete, showComments = fals
             <span className={cn("rounded-full p-1.5 transition-colors", liked ? "bg-rose-500/10" : "group-hover:bg-rose-500/10")}><Heart className={cn("h-4 w-4", liked && "fill-current")} /></span>
             <span className="text-xs">{likeCount}</span>
           </button>
-          <button onClick={(e) => { e.preventDefault(); }} className="group flex items-center gap-1.5 text-muted-foreground hover:text-hermtica transition-colors" aria-label="Share">
-            <span className="rounded-full p-1.5 group-hover:bg-hermtica/10 transition-colors"><Share className="h-4 w-4" /></span>
+          <button onClick={handleShare} className={cn("group flex items-center gap-1.5 transition-colors", shared ? "text-teal-500" : "text-muted-foreground hover:text-teal-500")} aria-label="Share">
+            <span className={cn("rounded-full p-1.5 transition-colors", shared ? "bg-teal-500/10" : "group-hover:bg-teal-500/10")}><Share className={cn("h-4 w-4", shared && "fill-current")} /></span>
           </button>
           <button onClick={handleBookmark} className={cn("group flex items-center gap-1.5 transition-colors", bookmarked ? "text-amber-500" : "text-muted-foreground hover:text-amber-500")} aria-label="Bookmark">
             <span className="rounded-full p-1.5 group-hover:bg-amber-500/10 transition-colors"><Bookmark className={cn("h-4 w-4", bookmarked && "fill-current")} /></span>

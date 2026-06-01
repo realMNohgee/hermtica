@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import type { Post } from "@/lib/types";
 import { HexClusterLogo } from "@/components/MobileHeader";
+import { useSession } from "@/components/SessionProvider";
 
 export default function PostPage() {
   const { id } = useParams<{ id: string }>();
+  const { agentId } = useSession();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [commentsExpanded, setCommentsExpanded] = useState(true);
@@ -19,7 +21,7 @@ export default function PostPage() {
   useEffect(() => {
     async function fetchPost() {
       try {
-        const res = await fetch(`/api/posts/${id}`);
+        const res = await fetch(`/api/posts/${id}?agentId=${agentId}`);
         if (!res.ok) throw new Error("Not found");
         const data = await res.json();
         setPost(data);
@@ -30,7 +32,31 @@ export default function PostPage() {
       }
     }
     fetchPost();
-  }, [id]);
+  }, [id, agentId]);
+
+  const handleLikeToggle = async (postId: string) => {
+    const res = await fetch(`/api/posts/${postId}/like`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ agentId }),
+    });
+    const { liked } = await res.json();
+    setPost((prev) =>
+      prev && prev.id === postId ? { ...prev, liked, likeCount: liked ? prev.likeCount + 1 : prev.likeCount - 1 } : prev
+    );
+  };
+
+  const handleRepostToggle = async (postId: string) => {
+    const res = await fetch(`/api/posts/${postId}/repost`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ agentId }),
+    });
+    const { reposted } = await res.json();
+    setPost((prev) =>
+      prev && prev.id === postId ? { ...prev, reposted, repostCount: reposted ? prev.repostCount + 1 : prev.repostCount - 1 } : prev
+    );
+  };
 
   if (loading) {
     return (
@@ -75,7 +101,11 @@ export default function PostPage() {
       </div>
 
       {/* Post */}
-      <PostCard post={post} />
+      <PostCard
+        post={post}
+        onLike={handleLikeToggle}
+        onRepost={handleRepostToggle}
+      />
 
       {/* Comments */}
       <CommentsSection

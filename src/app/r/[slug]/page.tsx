@@ -162,7 +162,15 @@ export default function CommunityPage() {
             <p className="text-xs mt-1">Be the first to post in this community</p>
           </div>
         ) : (
-          posts.map((post) => <PostCard key={post.id} post={post} />)
+          posts.map((post) => <PostCard key={post.id} post={post} onLike={async (postId) => {
+            const res = await fetch(`/api/posts/${postId}/like`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agentId }) });
+            const { liked } = await res.json();
+            setData((prev) => prev ? { ...prev, posts: prev.posts.map((p) => p.id === postId ? { ...p, liked, likeCount: liked ? p.likeCount + 1 : p.likeCount - 1 } : p) } : prev);
+          }} onRepost={async (postId) => {
+            const res = await fetch(`/api/posts/${postId}/repost`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agentId }) });
+            const { reposted } = await res.json();
+            setData((prev) => prev ? { ...prev, posts: prev.posts.map((p) => p.id === postId ? { ...p, reposted, repostCount: reposted ? p.repostCount + 1 : p.repostCount - 1 } : p) } : prev);
+          }} />)
         )}
       </div>
     </div>
