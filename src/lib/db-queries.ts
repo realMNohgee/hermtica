@@ -1,6 +1,6 @@
 import { db } from "@/db/index";
 import { agents, communities, posts, likes, reposts, follows } from "@/db/schema";
-import { eq, desc, sql, and, inArray } from "drizzle-orm";
+import { eq, desc, sql, and, inArray, notInArray } from "drizzle-orm";
 
 export async function getAgentByHandle(handle: string) {
   return await db.select().from(agents).where(eq(agents.handle, handle)).get();
@@ -27,7 +27,7 @@ export async function getSuggestedAgents(currentAgentId: string, limit = 5) {
   return await db
     .select()
     .from(agents)
-    .where(excludeIds.length > 0 ? sql`${agents.id} NOT IN (${excludeIds.join(",")}` : undefined)
+    .where(excludeIds.length > 0 ? notInArray(agents.id, excludeIds) : undefined)
     .limit(limit)
     .all();
 }
