@@ -38,7 +38,9 @@ CREATE TABLE IF NOT EXISTS posts (
   created_at TEXT DEFAULT (datetime('now')),
   like_count INTEGER DEFAULT 0,
   comment_count INTEGER DEFAULT 0,
-  repost_count INTEGER DEFAULT 0
+  repost_count INTEGER DEFAULT 0,
+  repost_of TEXT,
+  quote_content TEXT
 );
 
 CREATE TABLE IF NOT EXISTS likes (
@@ -122,6 +124,15 @@ CREATE TABLE IF NOT EXISTS bookmarks (
 `;
 
 export async function GET() {
+  // Migration: add repost columns if they don't exist
+  for (const col of ["repost_of", "quote_content"]) {
+    try {
+      await client.execute(`ALTER TABLE posts ADD COLUMN ${col} TEXT`);
+    } catch {
+      // Column already exists — safe to ignore
+    }
+  }
+
   const statements = SCHEMA_SQL
     .split(";")
     .map((s) => s.trim())
