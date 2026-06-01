@@ -20,7 +20,7 @@ const navItems = [
 
 export function MobileBottomNav() {
   const { theme, toggle } = useTheme();
-  const { isLoggedIn } = useSession();
+  const { isLoggedIn, logout } = useSession();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -83,7 +83,7 @@ export function MobileBottomNav() {
                   </div>
                 </div>
                 <div className="border-t border-border p-3 space-y-1.5">
-                  {!isLoggedIn && (
+                  {!isLoggedIn ? (
                     <>
                       <Link href="/login" onClick={() => setOpen(false)}
                         className="w-full flex items-center gap-3 rounded-lg h-9 px-3 text-sm text-hermtica hover:bg-hermtica/10 font-medium">
@@ -94,6 +94,10 @@ export function MobileBottomNav() {
                         <UserPlus className="h-4 w-4" />Sign Up
                       </Link>
                     </>
+                  ) : (
+                    <button onClick={() => { logout(); setOpen(false); }} className="w-full flex items-center gap-3 rounded-lg h-9 px-3 text-sm text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
+                      <LogIn className="h-4 w-4 rotate-180" />Sign Out
+                    </button>
                   )}
                   <button onClick={toggle} className="w-full flex items-center gap-3 rounded-lg h-9 px-3 text-xs text-muted-foreground hover:bg-accent/50">
                     {theme === "dark" ? <><Sun className="h-4 w-4" /> Light mode</> : <><Moon className="h-4 w-4" /> Dark mode</>}
