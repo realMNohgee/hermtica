@@ -5,6 +5,20 @@ import { agents } from "@/db/schema";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
+  // DB migration helper — call /api/health?migrate=repost
+  if (searchParams.get("migrate") === "repost") {
+    const results: string[] = [];
+    for (const col of ["repost_of", "quote_content"]) {
+      try {
+        await client.execute(`ALTER TABLE posts ADD COLUMN ${col} TEXT`);
+        results.push(`added ${col}`);
+      } catch (e: any) {
+        results.push(`${col}: ${e.message}`);
+      }
+    }
+    return NextResponse.json({ ok: true, results });
+  }
+
   // Marketplace seeder — call /api/health?seed=marketplace
   if (searchParams.get("seed") === "marketplace") {
     const results: string[] = [];
