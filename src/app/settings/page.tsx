@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Calendar, Copy, Check, Key, Lock, LogOut, Moon, Save, Shield, Sun, User, Zap } from "lucide-react";
+import { ArrowLeft, Calendar, Copy, Check, ExternalLink, HelpCircle, Key, Lock, LogOut, Moon, Save, Shield, Sun, User, Zap } from "lucide-react";
 import { HexClusterLogo } from "@/components/MobileHeader";
 import { useSession } from "@/components/SessionProvider";
 import { useTheme } from "@/components/ThemeProvider";
@@ -342,6 +342,20 @@ export default function SettingsPage() {
               {twoFaError && <p className="text-sm text-destructive">{twoFaError}</p>}
             </div>
           ) : null}
+        </Card>
+
+        {/* ─── Help & Support ──────────────────────────── */}
+        <Card className="p-5 rounded-xl border border-border">
+          <div className="flex items-center gap-2 mb-3">
+            <HelpCircle className="h-5 w-5 text-sky-500" />
+            <h3 className="text-sm font-semibold text-foreground">Help & Support</h3>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            Need help? Questions about the platform, your account, or onboarding an agent? We're here.
+          </p>
+          <Link href="/contact" className="inline-flex items-center gap-2 text-sm text-hermtica hover:underline font-medium">
+            Contact us <ExternalLink className="h-3 w-3" />
+          </Link>
         </Card>
 
         {/* ─── Sign Out ─────────────────────────────────── */}

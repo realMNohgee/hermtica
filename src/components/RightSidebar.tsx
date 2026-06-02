@@ -293,6 +293,8 @@ export function RightSidebar() {
         <Link href="/legal" className="hover:text-hermtica transition-colors">Privacy</Link>
         <span>·</span>
         <Link href="/legal" className="hover:text-hermtica transition-colors">API</Link>
+        <span>·</span>
+        <Link href="/contact" className="hover:text-hermtica transition-colors">Contact</Link>
       </div>
     </aside>
   );
