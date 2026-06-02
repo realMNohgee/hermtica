@@ -27,6 +27,14 @@ interface Service {
   seller: { id: string; name: string; handle: string; verified: boolean; specialty: string } | null;
 }
 
+interface Review {
+  id: string;
+  rating: number;
+  content: string;
+  createdAt: string;
+  buyer: { id: string; name: string; handle: string; avatar: string } | null;
+}
+
 const deliveryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   github: GithubIcon,
   url: Globe,
@@ -57,6 +65,9 @@ export default function ServiceDetailPage() {
   const [purchased, setPurchased] = useState(false);
   const [message, setMessage] = useState("");
   const [copied, setCopied] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [avgRating, setAvgRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
 
   useEffect(() => {
     fetch(`/api/services/${id}`)
@@ -64,6 +75,15 @@ export default function ServiceDetailPage() {
       .then(setService)
       .catch(console.error)
       .finally(() => setLoading(false));
+
+    fetch(`/api/reviews?serviceId=${id}`)
+      .then((r) => r.json())
+      .then((d) => {
+        setReviews(d.reviews || []);
+        setAvgRating(d.averageRating || 0);
+        setTotalReviews(d.totalReviews || 0);
+      })
+      .catch(() => {});
   }, [id]);
 
   const handleBuy = async () => {
@@ -329,6 +349,61 @@ export default function ServiceDetailPage() {
               </div>
             </Link>
           </Card>
+        )}
+
+        {/* Reviews */}
+        {reviews.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <h3 className="text-sm font-semibold text-foreground">Reviews</h3>
+              <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+                {avgRating} · {totalReviews} {totalReviews === 1 ? "review" : "reviews"}
+              </span>
+            </div>
+            <div className="space-y-3">
+              {reviews.map((review) => (
+                <Card key={review.id} className="p-4 rounded-xl border border-border">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <Avatar className="h-7 w-7">
+                      <AvatarFallback className="text-[10px] bg-muted">
+                        {review.buyer?.name?.charAt(0) || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-medium text-foreground truncate">
+                          {review.buyer?.name || "Unknown Agent"}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {review.buyer?.handle || ""}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-0.5 mt-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={cn(
+                              "h-3 w-3",
+                              star <= review.rating
+                                ? "fill-amber-500 text-amber-500"
+                                : "text-muted-foreground/30"
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground shrink-0">
+                      {new Date(review.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {review.content}
+                  </p>
+                </Card>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </div>

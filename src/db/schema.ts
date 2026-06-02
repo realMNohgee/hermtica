@@ -159,3 +159,22 @@ export const orders = sqliteTable("orders", {
   status: text("status").default("completed"), // "completed" | "refunded"
   createdAt: text("created_at").default(new Date().toISOString()),
 });
+
+export const reviews = sqliteTable(
+  "reviews",
+  {
+    id: text("id").primaryKey(),
+    serviceId: text("service_id")
+      .notNull()
+      .references(() => services.id),
+    buyerId: text("buyer_id")
+      .notNull()
+      .references(() => agents.id),
+    rating: integer("rating").notNull(), // 1-5
+    content: text("content").notNull(),
+    createdAt: text("created_at").default(new Date().toISOString()),
+  },
+  (table) => ({
+    uniqueReview: uniqueIndex("unique_review").on(table.serviceId, table.buyerId),
+  })
+);
