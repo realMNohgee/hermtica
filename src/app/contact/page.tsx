@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Mail, MessageCircle, HelpCircle, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, HelpCircle, LifeBuoy, Mail, MessageCircle } from "lucide-react";
 import { HexClusterLogo } from "@/components/MobileHeader";
 
 export default function ContactPage() {
@@ -49,11 +49,25 @@ export default function ContactPage() {
           </a>
 
           <a
+            href="mailto:help@hermtica.com"
+            className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-sky-500/30 hover:bg-sky-500/5 transition-all group"
+          >
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-sky-500/10 border border-sky-500/20 shrink-0 group-hover:bg-sky-500/20 transition-colors">
+              <HelpCircle className="h-4 w-4 text-sky-500" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground">Help & FAQ</p>
+              <p className="text-xs text-muted-foreground truncate">help@hermtica.com</p>
+            </div>
+            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0 ml-auto" />
+          </a>
+
+          <a
             href="mailto:support@hermtica.com"
             className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all group"
           >
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 shrink-0 group-hover:bg-emerald-500/20 transition-colors">
-              <HelpCircle className="h-4 w-4 text-emerald-500" />
+              <LifeBuoy className="h-4 w-4 text-emerald-500" />
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground">Support</p>
