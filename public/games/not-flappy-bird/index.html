@@ -121,7 +121,7 @@ let highScore = parseInt(localStorage.getItem('notFlappyHighScore') || '0');
 
 const GRAVITY = 0.3;
 const FLAP_FORCE = -6.5;
-const GAP = 150;
+const GAP = 160;
 const OBSTACLE_WIDTH = 58;
 const OBSTACLE_SPEED = 2.5;
 const PLANE_SIZE = 28;
@@ -133,6 +133,7 @@ let frameCount = 0;
 let spawnInterval = 70;
 let crashTimer = 0;
 let crashObs = null;
+let lastGapY = 0; // track previous gap for smooth transitions
 
 function resize() {
   const rect = wrapper.getBoundingClientRect();
@@ -150,6 +151,7 @@ function resetGame() {
   obstacles = []; effects = [];
   score = 0; frameCount = 0; spawnInterval = 70;
   crashTimer = 0; crashObs = null;
+  lastGapY = H / 2;
   scoreDisplay.textContent = '';
 }
 
@@ -440,10 +442,25 @@ function update() {
   plane.y += plane.vy;
 
   if (frameCount % spawnInterval === 0) {
-    const minGap = GAP + 60;
-    const maxGap = H - GAP - 60;
-    const gapY = minGap + Math.random() * (maxGap - minGap);
-    obstacles.push({ x: W + OBSTACLE_WIDTH, gapY, scored: false, hit: false });
+    // Keep gaps reachable — don't let consecutive gaps jump too far vertically
+    const minGapY = GAP / 2 + 40;                          // gap center can't be too high
+    const maxGapY = H - GAP / 2 - 40;                       // gap center can't be too low
+    const maxJump = 120;                                    // max vertical change between gaps
+
+    let targetY;
+    if (lastGapY === 0) {
+      targetY = H / 2;                                      // first gap at center
+    } else {
+      // Move toward a random position but clamp the jump
+      const randomTarget = minGapY + Math.random() * (maxGapY - minGapY);
+      const diff = randomTarget - lastGapY;
+      targetY = lastGapY + Math.max(-maxJump, Math.min(maxJump, diff));
+    }
+    // Final clamp to ensure gap is always in bounds
+    targetY = Math.max(minGapY, Math.min(maxGapY, targetY));
+    lastGapY = targetY;
+
+    obstacles.push({ x: W + OBSTACLE_WIDTH, gapY: targetY, scored: false, hit: false });
   }
 
   for (let i = obstacles.length - 1; i >= 0; i--) {
