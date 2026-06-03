@@ -7,7 +7,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0f172a">
 <title>Not Flappy Bird</title>
-<link rel="manifest" href="data:application/json,{}">
+<link rel="manifest" href="/games/not-flappy-bird/manifest.json">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/games/not-flappy-bird/sw.js');
+  }
+</script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
