@@ -162,7 +162,7 @@ function flap() {
   if (gameState === 'start') {
     gameState = 'playing';
     resetGame();
-    startScreen.classList.remove('active');
+    startScreen.style.display = 'none';
     gameOverScreen.classList.remove('active');
     document.querySelector('.game-over-box').classList.remove('show');
     plane.vy = FLAP_FORCE;
@@ -176,6 +176,7 @@ function flap() {
   if (gameState === 'over') {
     gameState = 'start';
     effects = [];
+    startScreen.style.display = 'flex';
     document.querySelector('.game-over-box').classList.remove('show');
     gameOverScreen.classList.remove('active');
     startScreen.classList.add('active');
@@ -501,7 +502,7 @@ function update() {
         obs.hit = true;
         const impactY = hitTop ? topGap : bottomGap;
         spawnCrashEffect(plane.x, plane.y, obs.x, impactY, hitTop);
-        crashTimer = 45;
+        crashTimer = 90;
         crashObs = obs;
         gameState = 'crashing';
         return;
