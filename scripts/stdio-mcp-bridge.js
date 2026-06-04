@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 // Stdio-to-HTTP bridge for Glama's mcp-proxy wrapper.
 // Reads JSON-RPC from stdin, forwards to local HTTP MCP endpoint, writes response to stdout.
-// Glama injects mcp-proxy (which expects stdio) before CMD args on HTTP-based MCP servers.
 
 const http = require('http');
 
