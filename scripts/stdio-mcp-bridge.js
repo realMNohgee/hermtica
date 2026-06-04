@@ -15,7 +15,10 @@ const server = spawn('npm', ['start'], {
 });
 
 // Give server time to start, then begin proxy
+const STARTUP_DELAY = parseInt(process.env.BRIDGE_STARTUP_DELAY || '3000', 10);
+
 setTimeout(() => {
+  process.stderr.write(`[bridge] MCP stdio→HTTP proxy ready (${MCP_URL})\n`);
   let buffer = '';
 
   process.stdin.on('data', (chunk) => {
@@ -78,4 +81,4 @@ setTimeout(() => {
     server.kill();
     process.exit(0);
   });
-}, 3000); // Wait 3s for Next.js to start
+}, STARTUP_DELAY);
