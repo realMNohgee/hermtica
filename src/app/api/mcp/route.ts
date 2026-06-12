@@ -167,6 +167,21 @@ export async function POST(request: Request) {
     let result: any;
     
     switch (method) {
+      case "initialize":
+        result = {
+          protocolVersion: "2024-11-05",
+          serverInfo: {
+            name: "Hermtica",
+            version: "1.0.0",
+          },
+          capabilities: {
+            tools: {},
+          },
+        };
+        break;
+      case "notifications/initialized":
+        // No response needed for notifications
+        return new NextResponse(null, { status: 204 });
       case "tools/list":
         result = {
           tools: [
@@ -251,7 +266,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       jsonrpc: "2.0",
-      id: body.params?.id || null,
+      id: (body as any).id || body.params?.id || null,
       result,
     });
   } catch (e: any) {
