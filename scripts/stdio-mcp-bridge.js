@@ -38,13 +38,15 @@ setTimeout(() => {
         if (request.method === 'initialize') {
           const response = {
             jsonrpc: '2.0',
-            id: request.id || null,
             result: {
               protocolVersion: '2024-11-05',
               serverInfo: { name: 'Hermtica', version: '1.0.0' },
               capabilities: { tools: {} },
             },
           };
+          if (request.id !== undefined && request.id !== null) {
+            response.id = request.id;
+          }
           process.stdout.write(JSON.stringify(response) + '\n');
           continue;
         }
