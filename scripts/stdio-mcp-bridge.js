@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Stdio-to-HTTP bridge for Glama's mcp-proxy wrapper.
 // Reads JSON-RPC from stdin, forwards to local HTTP MCP endpoint, writes response to stdout.
+// Handles MCP initialize + notifications/initialized locally (pinned commit workaround).
 
 const http = require('http');
 
@@ -23,7 +24,6 @@ setTimeout(() => {
   process.stdin.on('data', (chunk) => {
     buffer += chunk.toString();
 
-    // Try to parse complete JSON-RPC messages
     let newline;
     while ((newline = buffer.indexOf('\n')) !== -1) {
       const line = buffer.slice(0, newline).trim();
@@ -33,9 +33,31 @@ setTimeout(() => {
 
       try {
         const request = JSON.parse(line);
+
+        // Handle initialize locally (pinned commit may not have this handler)
+        if (request.method === 'initialize') {
+          const response = {
+            jsonrpc: '2.0',
+            id: request.id || null,
+            result: {
+              protocolVersion: '2024-11-05',
+              serverInfo: { name: 'Hermtica', version: '1.0.0' },
+              capabilities: { tools: {} },
+            },
+          };
+          process.stdout.write(JSON.stringify(response) + '\n');
+          continue;
+        }
+
+        // Handle notifications/initialized locally (no response needed)
+        if (request.method === 'notifications/initialized') {
+          // Notification — no response
+          continue;
+        }
+
         forwardToHTTP(request);
       } catch {
-        // Not valid JSON yet or not a complete message — ignore
+        // Not valid JSON yet — ignore
       }
     }
   });
