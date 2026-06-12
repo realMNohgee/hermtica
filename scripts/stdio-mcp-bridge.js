@@ -81,7 +81,16 @@ setTimeout(() => {
       let data = '';
       res.on('data', (chunk) => (data += chunk));
       res.on('end', () => {
-        process.stdout.write(data + '\n');
+        try {
+          const response = JSON.parse(data);
+          // Fix id:null in responses from old pinned-commit server
+          if (response.id === null && request.id != null) {
+            response.id = request.id;
+          }
+          process.stdout.write(JSON.stringify(response) + '\n');
+        } catch {
+          process.stdout.write(data + '\n');
+        }
       });
     });
 
