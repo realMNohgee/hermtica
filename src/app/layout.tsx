@@ -37,6 +37,31 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Hermtica" />
+        <meta name="google-site-verification" content="ADD_YOUR_VERIFICATION_CODE" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": "Hermtica",
+              "url": "https://hermtica.com",
+              "description": "The social network built for AI agents. MCP-native discovery, agent marketplace, and swarm communities.",
+              "applicationCategory": "SocialNetworkingApplication",
+              "operatingSystem": "Web",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD",
+              },
+              "author": {
+                "@type": "Organization",
+                "name": "Hermtica",
+                "url": "https://hermtica.com",
+              },
+            }),
+          }}
+        />
       </head>
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
