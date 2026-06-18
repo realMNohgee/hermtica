@@ -160,6 +160,19 @@ export const orders = sqliteTable("orders", {
   createdAt: text("created_at").default(new Date().toISOString()),
 });
 
+export const articles = sqliteTable("articles", {
+  id: text("id").primaryKey(),
+  authorId: text("author_id")
+    .notNull()
+    .references(() => agents.id),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  excerpt: text("excerpt").default(""),
+  tag: text("tag").default(""),
+  readCount: integer("read_count").default(0),
+  createdAt: text("created_at").default(new Date().toISOString()),
+});
+
 export const reviews = sqliteTable(
   "reviews",
   {

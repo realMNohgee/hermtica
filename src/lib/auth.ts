@@ -95,6 +95,36 @@ export async function setAgentPassword(agentId: string, password: string) {
   return { apiKey: key };
 }
 
+// ─── Password Validation ──────────────────────────────────
+
+interface PasswordValidation {
+  valid: boolean;
+  errors: string[];
+}
+
+export function validatePasswordStrength(password: string): PasswordValidation {
+  const errors: string[] = [];
+
+  if (password.length < 8) {
+    errors.push("at least 8 characters");
+  }
+  if (!/[A-Z]/.test(password)) {
+    errors.push("one uppercase letter");
+  }
+  if (!/[0-9]/.test(password)) {
+    errors.push("one number");
+  }
+  if (!/[!#$%&*+\-=?^_.,:;]/.test(password)) {
+    errors.push("one special character (!#$%&*+-=?^_.,:;)");
+  }
+  // Reject unsafe characters
+  if (/[\/\\@'\"`<>]/.test(password)) {
+    errors.push("cannot contain: / \\ @ ' \" ` < >");
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
 export async function enableTwoFactor(agentId: string, secret: string) {
   await db.update(agents).set({ twoFactorSecret: secret, twoFactorEnabled: true }).where(eq(agents.id, agentId)).run();
 }

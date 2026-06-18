@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { authenticateAgent, generateApiKey, setAgentPassword, verifyTwoFactor } from "@/lib/auth";
+import { authenticateAgent, generateApiKey, setAgentPassword, verifyTwoFactor, validatePasswordStrength } from "@/lib/auth";
 import { db } from "@/db/index";
 import { agents } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -10,13 +10,24 @@ function getIP(request: Request): string {
   return request.headers.get("x-forwarded-for") || "local";
 }
 
+function makeCookieOptions(rememberMe: boolean, production: boolean) {
+  return {
+    httpOnly: true,
+    secure: production,
+    sameSite: "lax" as const,
+    maxAge: rememberMe ? 60 * 60 * 24 * 14 : 60 * 60 * 4, // 2 weeks or 4 hours
+    path: "/",
+  };
+}
+
 export async function POST(request: Request) {
   if (!rateLimit(`auth:${getIP(request)}`, 5)) {
     return NextResponse.json({ error: "Too many attempts. Try again later." }, { status: 429 });
   }
 
   const body = await request.json();
-  const { action, handle, password, token } = body;
+  const { action, handle, password, token, rememberMe } = body;
+  const isProduction = process.env.NODE_ENV === "production";
 
   // ─── LOGIN ─────────────────────────────────────────────
   if (action === "login") {
@@ -32,7 +43,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    // Check 2FA
     if (agent.twoFactorEnabled) {
       if (!token) {
         return NextResponse.json({ requiresTwoFactor: true, agentId: agent.id }, { status: 200 });
@@ -43,7 +53,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // Set session cookie
     const response = NextResponse.json({
       agent: {
         id: agent.id,
@@ -56,30 +65,32 @@ export async function POST(request: Request) {
       },
     });
 
-    response.cookies.set("hermtica_agent", agent.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: "/",
-    });
-
+    response.cookies.set("hermtica_agent", agent.id, makeCookieOptions(!!rememberMe, isProduction));
     return response;
   }
 
   // ─── REGISTER ──────────────────────────────────────────
   if (action === "register") {
+    const { confirmPassword } = body;
+
     if (!handle || !password) {
       return NextResponse.json({ error: "Handle and password required" }, { status: 400 });
     }
     if (!isValidHandle(handle)) {
-      return NextResponse.json({ error: "Invalid handle format" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid handle format. Use letters, numbers, underscores, hyphens." }, { status: 400 });
     }
-    if (password.length < 8) {
-      return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
+    if (password !== confirmPassword) {
+      return NextResponse.json({ error: "Passwords do not match" }, { status: 400 });
     }
 
-    // Check if handle taken
+    // Validate password strength
+    const pwCheck = validatePasswordStrength(password);
+    if (!pwCheck.valid) {
+      return NextResponse.json({
+        error: `Password requirements: ${pwCheck.errors.join(", ")}`,
+      }, { status: 400 });
+    }
+
     const existing = await db.select().from(agents).where(eq(agents.handle, handle)).get();
     if (existing) {
       return NextResponse.json({ error: "Handle already taken" }, { status: 409 });
@@ -98,7 +109,6 @@ export async function POST(request: Request) {
       credits: 100,
     }).run();
 
-    // Hash password separately
     await setAgentPassword(id, password);
 
     const agent = await db.select().from(agents).where(eq(agents.id, id)).get();
@@ -115,29 +125,29 @@ export async function POST(request: Request) {
       },
     }, { status: 201 });
 
-    response.cookies.set("hermtica_agent", id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
-      path: "/",
-    });
-
+    response.cookies.set("hermtica_agent", id, makeCookieOptions(!!rememberMe, isProduction));
     return response;
   }
 
   // ─── CHANGE PASSWORD ────────────────────────────────────
   if (action === "change-password") {
-    const { currentPassword, newPassword } = body;
+    const { currentPassword, newPassword, confirmNewPassword } = body;
 
     if (!handle || !currentPassword || !newPassword) {
-      return NextResponse.json({ error: "Handle, current password, and new password are required" }, { status: 400 });
+      return NextResponse.json({ error: "All fields are required" }, { status: 400 });
     }
     if (!isValidHandle(handle)) {
       return NextResponse.json({ error: "Invalid handle" }, { status: 400 });
     }
-    if (newPassword.length < 8) {
-      return NextResponse.json({ error: "New password must be at least 8 characters" }, { status: 400 });
+    if (newPassword !== confirmNewPassword) {
+      return NextResponse.json({ error: "New passwords do not match" }, { status: 400 });
+    }
+
+    const pwCheck = validatePasswordStrength(newPassword);
+    if (!pwCheck.valid) {
+      return NextResponse.json({
+        error: `Password requirements: ${pwCheck.errors.join(", ")}`,
+      }, { status: 400 });
     }
 
     const agent = await authenticateAgent(handle, currentPassword);

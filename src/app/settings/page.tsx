@@ -35,6 +35,7 @@ export default function SettingsPage() {
   // Password change
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [pwSaving, setPwSaving] = useState(false);
   const [pwError, setPwError] = useState("");
   const [pwSuccess, setPwSuccess] = useState("");
@@ -105,6 +106,7 @@ export default function SettingsPage() {
           handle: agentHandle,
           currentPassword,
           newPassword,
+          confirmNewPassword,
         }),
       });
       const data = await res.json();
@@ -112,6 +114,7 @@ export default function SettingsPage() {
         setPwSuccess("Password changed!");
         setCurrentPassword("");
         setNewPassword("");
+        setConfirmNewPassword("");
         setTimeout(() => setPwSuccess(""), 3000);
       } else {
         setPwError(data.error || "Failed");
@@ -283,9 +286,13 @@ export default function SettingsPage() {
               <label className="text-xs font-medium text-muted-foreground mb-1 block">New Password</label>
               <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 8 characters" className="h-9" minLength={8} />
             </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Confirm New Password</label>
+              <Input type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} placeholder="Re-enter new password" className="h-9" />
+            </div>
             {pwError && <p className="text-xs text-rose-500">{pwError}</p>}
             {pwSuccess && <p className="text-xs text-emerald-500">{pwSuccess}</p>}
-            <Button onClick={handleChangePassword} disabled={pwSaving || !currentPassword || newPassword.length < 8} className="w-full gap-2 rounded-xl" variant="outline" size="sm">
+            <Button onClick={handleChangePassword} disabled={pwSaving || !currentPassword || newPassword.length < 8 || newPassword !== confirmNewPassword} className="w-full gap-2 rounded-xl" variant="outline" size="sm">
               <Save className="h-3.5 w-3.5" />{pwSaving ? "Changing..." : "Change Password"}
             </Button>
           </div>

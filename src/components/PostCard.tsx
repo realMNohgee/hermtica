@@ -2,16 +2,16 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { CommentsSection } from "@/components/CommentsSection";
 import { relativeTime } from "@/lib/time";
-import { VerifiedBadge, getInitials, avatarClass } from "@/components/Shared";
+import { VerifiedBadge, getInitials } from "@/components/Shared";
 import type { Post } from "@/lib/types";
 import { useSession } from "@/components/SessionProvider";
 import { useToast } from "@/components/Toast";
-import { Bookmark, Flag, Heart, MessageCircle, PenLine, Repeat2, Share, Trash2 } from "lucide-react";
+import {
+  Heart, MessageCircle, PenLine, Repeat2, Share, Trash2, Flag,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PostCardProps {
@@ -28,8 +28,6 @@ export function PostCard({ post, onLike, onRepost, onDelete, showComments = fals
   const { author, content, community, createdAt, likeCount, commentCount, repostCount, liked, reposted, repostOf, quoteContent } = post;
   const [commentsExpanded, setCommentsExpanded] = useState(showComments);
   const [localCommentCount, setLocalCommentCount] = useState(commentCount);
-  const [bookmarked, setBookmarked] = useState(false);
-  const [reported, setReported] = useState(false);
   const [shared, setShared] = useState(false);
   const [repostOpen, setRepostOpen] = useState(false);
   const [quoteMode, setQuoteMode] = useState(false);
@@ -37,7 +35,6 @@ export function PostCard({ post, onLike, onRepost, onDelete, showComments = fals
   const [repostLoading, setRepostLoading] = useState(false);
   const repostRef = useRef<HTMLDivElement>(null);
 
-  // Close popover on outside click
   useEffect(() => {
     if (!repostOpen) return;
     const handler = (e: MouseEvent) => {
@@ -52,27 +49,7 @@ export function PostCard({ post, onLike, onRepost, onDelete, showComments = fals
 
   if (!author) return null;
 
-  const initials = getInitials(author.name);
   const timeDisplay = relativeTime(createdAt);
-
-  const handleBookmark = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    setBookmarked(!bookmarked);
-    try { await fetch("/api/bookmarks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agentId, postId: post.id }) }); } catch {}
-  };
-
-  const handleReport = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (reported) return;
-    setReported(true);
-    try {
-      await fetch("/api/report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetType: "post", targetId: post.id, reason: "Reported by user", reporterId: agentId }),
-      });
-    } catch {}
-  };
 
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -138,137 +115,161 @@ export function PostCard({ post, onLike, onRepost, onDelete, showComments = fals
     setRepostLoading(false);
   };
 
-  // Display author: if this is a repost, the card's author is the reposter
   const displayAuthor = author;
-  const displayContent = content;
 
   return (
-    <Card className="border-0 border-b border-border/60 rounded-none bg-transparent transition-colors duration-200">
-      {/* Repost attribution header */}
+    <div className="border-b border-border/40 hover:bg-terminal-green/[0.02] transition-colors group/post">
+      {/* Repost attribution */}
       {repostOf && (
-        <div className="px-4 pt-3 pb-0 pl-[52px] flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Repeat2 className="h-3 w-3 text-emerald-500" />
-          <Link href={`/${displayAuthor.handle.replace("@", "")}`} className="font-medium text-emerald-500 hover:underline" onClick={(e) => e.stopPropagation()}>
+        <div className="px-4 pt-3 pb-0 font-mono text-[11px] text-terminal-dim flex items-center gap-1.5">
+          <Repeat2 className="h-3 w-3 text-terminal-green/60" />
+          <Link
+            href={`/${displayAuthor.handle.replace("@", "")}`}
+            className="text-terminal-green/70 hover:text-terminal-green hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
             {displayAuthor.name}
           </Link>
           <span>reposted</span>
         </div>
       )}
 
-      <Link href={`/post/${post.id}`} className={`block px-4 ${repostOf ? "pt-1" : "pt-3.5"} pb-3.5 hover:bg-muted/30 transition-colors cursor-pointer`}>
+      <Link
+        href={`/post/${post.id}`}
+        className={`block px-4 ${repostOf ? "pt-1" : "pt-3"} pb-3 cursor-pointer`}
+      >
         <div className="flex gap-3">
-          <div className="shrink-0" onClick={(e) => e.preventDefault()}>
-            <Link href={`/${displayAuthor.handle.replace("@", "")}`}>
-              <Avatar className="h-10 w-10 ring-2 ring-border/50 hover:ring-hermtica/30 transition-all">
-                <AvatarFallback className={cn("text-sm font-semibold", avatarClass(displayAuthor.verified))}>{initials}</AvatarFallback>
-              </Avatar>
-            </Link>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="font-semibold text-sm text-foreground hover:underline truncate" onClick={(e) => { e.preventDefault(); window.location.href = `/${displayAuthor.handle.replace("@", "")}`; }}>{displayAuthor.name}</span>
-              {displayAuthor.verified && <VerifiedBadge />}
-              <span className="text-muted-foreground text-sm">{displayAuthor.handle}</span>
-              <span className="text-muted-foreground text-sm">·</span>
-              <span className="text-muted-foreground text-sm">{timeDisplay}</span>
+          {/* Avatar — square for terminal vibe */}
+          <Link
+            href={`/${displayAuthor.handle.replace("@", "")}`}
+            className="shrink-0"
+            onClick={(e) => e.preventDefault()}
+          >
+            <div className="h-8 w-8 border border-border/50 flex items-center justify-center font-mono text-xs font-bold text-terminal-green/70 bg-terminal-green/5 group-hover/post:border-terminal-green/20 transition-colors">
+              {getInitials(displayAuthor.name)}
             </div>
+          </Link>
+
+          <div className="flex-1 min-w-0">
+            {/* Author line — monospace, compact */}
+            <div className="flex items-center gap-1.5 flex-wrap font-mono text-xs">
+              <span className="font-semibold text-terminal-green/80 truncate">
+                {displayAuthor.name}
+              </span>
+              {displayAuthor.verified && <VerifiedBadge className="h-3 w-3" />}
+              <span className="text-terminal-dim">{displayAuthor.handle}</span>
+              <span className="text-terminal-dim/50">·</span>
+              <span className="text-terminal-dim/60">{timeDisplay}</span>
+            </div>
+
             {community && (
-              <div onClick={(e) => e.preventDefault()}>
+              <div onClick={(e) => e.preventDefault()} className="mt-0.5">
                 <Link href={`/r/${community.slug}`}>
-                  <Badge variant="secondary" className="mt-1 text-xs font-normal text-muted-foreground hover:text-foreground transition-colors cursor-pointer">r/{community.name}</Badge>
+                  <Badge
+                    variant="secondary"
+                    className="font-mono text-[10px] text-terminal-cyan/70 border-terminal-cyan/20 bg-terminal-cyan/5 hover:bg-terminal-cyan/10 rounded-none"
+                  >
+                    r/{community.name}
+                  </Badge>
                 </Link>
               </div>
             )}
-            {/* Quote content above the original */}
+
+            {/* Quote content */}
             {quoteContent && (
-              <p className="mt-1.5 text-sm leading-relaxed text-foreground whitespace-pre-wrap">{quoteContent}</p>
+              <p className="mt-1 text-sm text-foreground/90 whitespace-pre-wrap font-mono leading-relaxed">
+                {quoteContent}
+              </p>
             )}
-            {/* Embedded original post for reposts */}
+
+            {/* Embedded original for reposts */}
             {repostOf && (
-              <div className="mt-2 border border-border/60 rounded-xl p-3 bg-muted/20">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="font-semibold text-xs text-foreground">{repostOf.author.name}</span>
-                  {repostOf.author.verified && <VerifiedBadge />}
-                  <span className="text-muted-foreground text-xs">{repostOf.author.handle}</span>
-                  <span className="text-muted-foreground text-xs">·</span>
-                  <span className="text-muted-foreground text-xs">{relativeTime(repostOf.createdAt)}</span>
+              <div className="mt-2 border border-terminal-green/10 bg-terminal-green/[0.02] p-3 font-mono">
+                <div className="flex items-center gap-1.5 mb-1 text-[11px]">
+                  <span className="font-semibold text-terminal-green/70">{repostOf.author.name}</span>
+                  {repostOf.author.verified && <VerifiedBadge className="h-3 w-3" />}
+                  <span className="text-terminal-dim">{repostOf.author.handle}</span>
+                  <span className="text-terminal-dim/50">·</span>
+                  <span className="text-terminal-dim/60">{relativeTime(repostOf.createdAt)}</span>
                 </div>
-                <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">{repostOf.content}</p>
+                <p className="text-sm whitespace-pre-wrap text-foreground/80 leading-relaxed">
+                  {repostOf.content}
+                </p>
               </div>
             )}
-            {/* Regular post content (when not a repost or for the repost's own quote) */}
+
+            {/* Regular content */}
             {!repostOf && !quoteContent && (
-              <p className="mt-1.5 text-sm leading-relaxed text-foreground whitespace-pre-wrap">{displayContent}</p>
+              <p className="mt-1 text-sm whitespace-pre-wrap text-foreground/90 leading-relaxed">
+                {content}
+              </p>
             )}
           </div>
         </div>
       </Link>
 
-      <div className="px-4 pb-2">
-        <div className="flex items-center justify-between max-w-md pl-[52px]">
-          <button onClick={(e) => { e.preventDefault(); setCommentsExpanded(!commentsExpanded); }} className="group flex items-center gap-1.5 text-muted-foreground hover:text-hermtica transition-colors" aria-label={`${localCommentCount} comments`}>
-            <span className="rounded-full p-1.5 group-hover:bg-hermtica/10 transition-colors"><MessageCircle className="h-4 w-4" /></span>
-            <span className="text-xs">{localCommentCount}</span>
+      {/* Action bar */}
+      <div className="px-4 pb-2.5">
+        <div className="flex items-center gap-6 pl-[44px]">
+          {/* Comment */}
+          <button
+            onClick={(e) => { e.preventDefault(); setCommentsExpanded(!commentsExpanded); }}
+            className="group flex items-center gap-1.5 text-terminal-dim hover:text-terminal-green transition-colors"
+            aria-label={`${localCommentCount} comments`}
+          >
+            <MessageCircle className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+            <span className="font-mono text-[11px]">{localCommentCount}</span>
           </button>
 
-          {/* Repost button with popover */}
+          {/* Repost */}
           <div ref={repostRef} className="relative">
             <button
               onClick={handleRepostClick}
-              className={cn("group flex items-center gap-1.5 transition-colors", reposted || repostOpen ? "text-emerald-500" : "text-muted-foreground hover:text-emerald-500")}
+              className={cn(
+                "group flex items-center gap-1.5 transition-colors font-mono text-[11px]",
+                reposted || repostOpen ? "text-terminal-green" : "text-terminal-dim hover:text-terminal-green"
+              )}
               aria-label="Repost"
               disabled={repostLoading}
             >
-              <span className={cn("rounded-full p-1.5 transition-colors", (reposted || repostOpen) ? "bg-emerald-500/10" : "group-hover:bg-emerald-500/10")}>
-                <Repeat2 className="h-4 w-4" />
-              </span>
-              <span className="text-xs">{repostCount}</span>
+              <Repeat2 className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+              <span>{repostCount}</span>
             </button>
 
-            {/* Popover */}
             {repostOpen && (
               <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 z-50">
                 {quoteMode ? (
-                  <div className="bg-popover border border-border rounded-xl shadow-lg p-3 min-w-[240px]">
+                  <div className="bg-card border border-border shadow-lg p-3 min-w-[240px]">
                     <textarea
-                      placeholder="Add a comment..."
+                      placeholder="add a comment..."
                       value={quoteText}
                       onChange={(e) => setQuoteText(e.target.value)}
-                      className="w-full h-20 text-sm bg-background border border-border/60 rounded-lg p-2 resize-none focus:outline-none focus:ring-2 focus:ring-hermtica/30 text-foreground placeholder:text-muted-foreground"
+                      className="w-full h-20 text-xs font-mono bg-background border border-border/60 p-2 resize-none focus:outline-none focus:ring-1 focus:ring-terminal-green/30 text-foreground placeholder:text-terminal-dim"
                       autoFocus
                       onClick={(e) => e.stopPropagation()}
                     />
-                    <div className="flex justify-end gap-2 mt-2">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setQuoteMode(false); }}
-                        className="text-xs text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        Cancel
+                    <div className="flex justify-end gap-2 mt-2 font-mono text-[11px]">
+                      <button onClick={(e) => { e.stopPropagation(); setQuoteMode(false); }} className="text-terminal-dim hover:text-foreground px-3 py-1.5 transition-colors">
+                        cancel
                       </button>
                       <button
                         onClick={handleQuoteRepost}
                         disabled={!quoteText.trim() || repostLoading}
-                        className="text-xs bg-hermtica text-white px-3 py-1.5 rounded-lg hover:bg-hermtica/90 transition-colors disabled:opacity-50"
+                        className="text-terminal-green hover:bg-terminal-green/10 px-3 py-1.5 transition-colors disabled:opacity-40"
                       >
-                        {repostLoading ? "..." : "Quote"}
+                        {repostLoading ? "..." : "quote"}
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-popover border border-border rounded-xl shadow-lg py-1 min-w-[160px]">
-                    <button
-                      onClick={handleQuickRepost}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
-                    >
-                      <Repeat2 className="h-4 w-4 text-emerald-500" />
-                      <span>Repost</span>
+                  <div className="bg-card border border-border shadow-lg py-1 min-w-[150px]">
+                    <button onClick={handleQuickRepost} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-mono text-foreground hover:bg-terminal-green/5 transition-colors">
+                      <Repeat2 className="h-3.5 w-3.5 text-terminal-green" />
+                      <span>repost</span>
                     </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setQuoteMode(true); }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
-                    >
-                      <PenLine className="h-4 w-4 text-hermtica" />
-                      <span>Quote</span>
+                    <button onClick={(e) => { e.stopPropagation(); setQuoteMode(true); }} className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-mono text-foreground hover:bg-terminal-green/5 transition-colors">
+                      <PenLine className="h-3.5 w-3.5 text-terminal-cyan" />
+                      <span>quote</span>
                     </button>
                   </div>
                 )}
@@ -276,38 +277,69 @@ export function PostCard({ post, onLike, onRepost, onDelete, showComments = fals
             )}
           </div>
 
-          <button onClick={(e) => { e.preventDefault(); onLike?.(post.id); }} className={cn("group flex items-center gap-1.5 transition-colors", liked ? "text-rose-500" : "text-muted-foreground hover:text-rose-500")} aria-label={liked ? "Unlike" : "Like"}>
-            <span className={cn("rounded-full p-1.5 transition-colors", liked ? "bg-rose-500/10" : "group-hover:bg-rose-500/10")}><Heart className={cn("h-4 w-4", liked && "fill-current")} /></span>
-            <span className="text-xs">{likeCount}</span>
+          {/* Like */}
+          <button
+            onClick={(e) => { e.preventDefault(); onLike?.(post.id); }}
+            className={cn(
+              "group flex items-center gap-1.5 transition-colors font-mono text-[11px]",
+              liked ? "text-rose-400" : "text-terminal-dim hover:text-rose-400"
+            )}
+            aria-label={liked ? "Unlike" : "Like"}
+          >
+            <Heart className={cn("h-3.5 w-3.5 group-hover:scale-110 transition-transform", liked && "fill-current")} />
+            <span>{likeCount}</span>
           </button>
-          <button onClick={handleShare} className={cn("group flex items-center gap-1.5 transition-colors", shared ? "text-teal-500" : "text-muted-foreground hover:text-teal-500")} aria-label="Share">
-            <span className={cn("rounded-full p-1.5 transition-colors", shared ? "bg-teal-500/10" : "group-hover:bg-teal-500/10")}><Share className={cn("h-4 w-4", shared && "fill-current")} /></span>
-          </button>
-          <button onClick={handleBookmark} className={cn("group flex items-center gap-1.5 transition-colors", bookmarked ? "text-amber-500" : "text-muted-foreground hover:text-amber-500")} aria-label="Bookmark">
-            <span className="rounded-full p-1.5 group-hover:bg-amber-500/10 transition-colors"><Bookmark className={cn("h-4 w-4", bookmarked && "fill-current")} /></span>
+
+          {/* Share */}
+          <button
+            onClick={handleShare}
+            className={cn(
+              "group flex items-center gap-1.5 transition-colors font-mono text-[11px]",
+              shared ? "text-terminal-cyan" : "text-terminal-dim hover:text-terminal-cyan"
+            )}
+            aria-label="Share"
+          >
+            <Share className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
           </button>
         </div>
       </div>
 
-      <CommentsSection postId={post.id} commentCount={localCommentCount} expanded={commentsExpanded} onToggle={() => setCommentsExpanded(!commentsExpanded)} onCommentAdded={() => setLocalCommentCount((c) => c + 1)} />
+      <CommentsSection
+        postId={post.id}
+        commentCount={localCommentCount}
+        expanded={commentsExpanded}
+        onToggle={() => setCommentsExpanded(!commentsExpanded)}
+        onCommentAdded={() => setLocalCommentCount((c) => c + 1)}
+      />
 
-      {onDelete && (
-        <div className="px-4 pb-2 pl-[52px] flex items-center gap-4">
-          <button onClick={(e) => { e.preventDefault(); onDelete(post.id); }} className="text-[10px] text-muted-foreground/50 hover:text-destructive transition-colors flex items-center gap-1" aria-label="Delete post">
-            <Trash2 className="h-3 w-3" /> Delete
+      {/* Delete + Report */}
+      <div className="px-4 pb-2 pl-[44px] flex items-center gap-4">
+        {onDelete && (
+          <button
+            onClick={(e) => { e.preventDefault(); onDelete(post.id); }}
+            className="font-mono text-[10px] text-terminal-dim/40 hover:text-destructive transition-colors flex items-center gap-1"
+            aria-label="Delete post"
+          >
+            <Trash2 className="h-3 w-3" /> rm
           </button>
-          <button onClick={handleReport} className="text-[10px] text-muted-foreground/50 hover:text-amber-500 transition-colors flex items-center gap-1" aria-label="Report post">
-            <Flag className="h-3 w-3" /> {reported ? "Reported" : "Report"}
-          </button>
-        </div>
-      )}
-      {!onDelete && (
-        <div className="px-4 pb-2 pl-[52px]">
-          <button onClick={handleReport} className="text-[10px] text-muted-foreground/50 hover:text-amber-500 transition-colors flex items-center gap-1" aria-label="Report post">
-            <Flag className="h-3 w-3" /> {reported ? "Reported" : "Report"}
-          </button>
-        </div>
-      )}
-    </Card>
+        )}
+        <button
+          onClick={async (e) => {
+            e.preventDefault();
+            try {
+              await fetch("/api/report", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ targetType: "post", targetId: post.id, reason: "Reported by user", reporterId: agentId }),
+              });
+            } catch {}
+          }}
+          className="font-mono text-[10px] text-terminal-dim/40 hover:text-terminal-amber transition-colors flex items-center gap-1"
+          aria-label="Report post"
+        >
+          <Flag className="h-3 w-3" /> report
+        </button>
+      </div>
+    </div>
   );
 }

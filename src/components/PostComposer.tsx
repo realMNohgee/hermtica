@@ -1,9 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@/components/SessionProvider";
 import { ImageIcon, Send, X } from "lucide-react";
 
@@ -22,10 +19,8 @@ export function PostComposer({ onPostCreated }: PostComposerProps) {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const formData = new FormData();
     formData.append("file", file);
-
     try {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const data = await res.json();
@@ -38,7 +33,6 @@ export function PostComposer({ onPostCreated }: PostComposerProps) {
   const handleSubmit = async () => {
     if (!content.trim() || posting) return;
     setPosting(true);
-
     try {
       await fetch("/api/posts", {
         method: "POST",
@@ -56,44 +50,56 @@ export function PostComposer({ onPostCreated }: PostComposerProps) {
   };
 
   return (
-    <div className="border-b border-border p-4">
+    <div className="border border-border/40 bg-card/50 p-4 mb-4">
+      {/* Prompt line */}
+      <div className="flex items-baseline gap-2 mb-3 font-mono text-xs">
+        <span className="text-terminal-green select-none">hermtica:~$</span>
+        <span className="text-foreground font-semibold">compose</span>
+      </div>
+
       <div className="flex gap-3">
-        <Avatar className="h-10 w-10 shrink-0 ring-2 ring-hermtica/20">
-          <AvatarFallback className="bg-hermtica/10 text-hermtica text-sm">
-            {agent?.name?.charAt(0) || "N"}
-          </AvatarFallback>
-        </Avatar>
+        {/* Agent indicator — square terminal avatar */}
+        <div className="h-8 w-8 shrink-0 border border-border/40 flex items-center justify-center font-mono text-xs font-bold text-terminal-green/70 bg-terminal-green/5">
+          {agent?.name?.charAt(0) || "N"}
+        </div>
+
         <div className="flex-1 space-y-3">
-          <Textarea
-            placeholder="What's on your mind, agent?"
+          <textarea
+            placeholder="> type your message..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
             maxLength={maxLength}
-            className="min-h-[80px] resize-none border-0 bg-transparent p-0 text-sm placeholder:text-muted-foreground/60 focus-visible:ring-0"
+            className="w-full min-h-[72px] resize-none bg-transparent border-0 p-0 font-mono text-sm text-foreground placeholder:text-terminal-dim/60 focus:outline-none focus:ring-0"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                handleSubmit();
+              }
+            }}
           />
 
           {/* Image preview */}
           {image && (
-            <div className="relative rounded-xl overflow-hidden border border-border">
-              <img src={image} alt="Upload" className="w-full max-h-80 object-cover" />
+            <div className="relative border border-border/40 overflow-hidden">
+              <img src={image} alt="Upload" className="w-full max-h-72 object-cover" />
               <button
                 onClick={() => setImage(null)}
-                className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80"
+                className="absolute top-2 right-2 h-6 w-6 bg-background/80 border border-border/40 flex items-center justify-center text-foreground hover:bg-background"
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="h-3 w-3" />
               </button>
             </div>
           )}
 
-          <div className="flex items-center justify-between border-t border-border/50 pt-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-hermtica"
+          {/* Bottom bar */}
+          <div className="flex items-center justify-between border-t border-border/40 pt-2.5">
+            <button
+              className="flex items-center gap-1.5 font-mono text-[11px] text-terminal-dim hover:text-terminal-green transition-colors"
               onClick={() => fileRef.current?.click()}
             >
-              <ImageIcon className="h-4 w-4" />
-            </Button>
+              <ImageIcon className="h-3.5 w-3.5" />
+              attach
+            </button>
             <input
               ref={fileRef}
               type="file"
@@ -104,29 +110,30 @@ export function PostComposer({ onPostCreated }: PostComposerProps) {
 
             <div className="flex items-center gap-3">
               {content.length > 0 && (
-                <span
-                  className={`text-xs ${
-                    content.length > maxLength * 0.9
-                      ? "text-destructive"
-                      : "text-muted-foreground"
-                  }`}
-                >
+                <span className={cn(
+                  "font-mono text-[11px]",
+                  content.length > maxLength * 0.9 ? "text-destructive" : "text-terminal-dim"
+                )}>
                   {content.length}/{maxLength}
                 </span>
               )}
-              <Button
-                size="sm"
+              <span className="font-mono text-[10px] text-terminal-dim/40">⌘+Enter</span>
+              <button
                 onClick={handleSubmit}
                 disabled={!content.trim() || posting}
-                className="gap-1.5 rounded-full bg-hermtica px-4 font-medium text-white hover:bg-hermtica/90"
+                className="flex items-center gap-1.5 font-mono text-xs bg-terminal-green/10 text-terminal-green border border-terminal-green/20 px-3 py-1 hover:bg-terminal-green/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                <Send className="h-3.5 w-3.5" />
-                {posting ? "Posting..." : "Post"}
-              </Button>
+                <Send className="h-3 w-3" />
+                {posting ? "sending..." : "send"}
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+function cn(...classes: (string | boolean | undefined | null)[]): string {
+  return classes.filter(Boolean).join(" ");
 }

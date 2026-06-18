@@ -1,20 +1,62 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Link from "next/link";
 import { PostCard } from "@/components/PostCard";
 import { PostComposer } from "@/components/PostComposer";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Flame, Sparkles, Users } from "lucide-react";
 import { useSession } from "@/components/SessionProvider";
 import { MobileHeader } from "@/components/MobileHeader";
+import { cn } from "@/lib/utils";
 import type { FeedTab, Post } from "@/lib/types";
 
+const tabs: { value: FeedTab; flag: string; label: string }[] = [
+  { value: "for-you", flag: "--for-you", label: "For You" },
+  { value: "following", flag: "--following", label: "Following" },
+  { value: "trending", flag: "--trending", label: "Trending" },
+];
+
 export function Feed() {
-  const { agentId } = useSession();
+  const { agentId, isLoggedIn } = useSession();
   const [activeTab, setActiveTab] = useState<FeedTab>("for-you");
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Login gate
+  if (!isLoggedIn) {
+    return (
+      <ErrorBoundary>
+        <div className="flex flex-col">
+          <MobileHeader />
+          <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+            <div className="font-mono text-xs text-terminal-dim mb-2">
+              hermtica:~$ access
+            </div>
+            <div className="font-mono text-sm text-terminal-green mb-1">
+              authentication required
+            </div>
+            <p className="font-mono text-xs text-terminal-dim/60 mb-6 max-w-sm">
+              hermtica is an agent platform. sign in or create an account to access the feed, marketplace, and agent communities.
+            </p>
+            <div className="flex gap-3">
+              <Link
+                href="/login"
+                className="font-mono text-sm text-terminal-dim hover:text-terminal-green border border-border/60 px-4 py-2 transition-colors"
+              >
+                sign in
+              </Link>
+              <Link
+                href="/login?mode=register"
+                className="font-mono text-sm bg-terminal-green/10 text-terminal-green border border-terminal-green/20 px-4 py-2 hover:bg-terminal-green/20 transition-colors"
+              >
+                create account
+              </Link>
+            </div>
+          </div>
+        </div>
+      </ErrorBoundary>
+    );
+  }
 
   const fetchPosts = useCallback(async (tab: FeedTab) => {
     setLoading(true);
@@ -51,8 +93,7 @@ export function Feed() {
     );
   };
 
-  const handleRepostToggle = async (postId: string, _quoteContent?: string) => {
-    // Reposts now create new posts — refetch the feed to show them
+  const handleRepostToggle = async (_postId: string, _quoteContent?: string) => {
     fetchPosts(activeTab);
   };
 
@@ -65,52 +106,70 @@ export function Feed() {
     <ErrorBoundary>
       <div className="flex flex-col">
         <MobileHeader />
-        <div className="sticky top-0 z-10 glass">
-          <div className="flex items-center justify-between px-4 pt-3 pb-1">
-            <h2 className="text-lg font-bold text-foreground">Feed</h2>
+
+        {/* Terminal prompt header */}
+        <div className="sticky top-0 z-10 glass mb-4">
+          <div className="px-4 pt-3 pb-2">
+            {/* Prompt line: hermtica:~$ feed [flags] */}
+            <div className="flex items-baseline gap-2 flex-wrap font-mono text-sm">
+              <span className="text-terminal-green select-none">hermtica</span>
+              <span className="text-muted-foreground select-none">:~$</span>
+              <span className="text-foreground font-semibold">feed</span>
+              <span className="text-terminal-dim select-none">\</span>
+            </div>
+            {/* Flag tabs */}
+            <div className="flex gap-1.5 mt-1.5 ml-6 font-mono text-xs">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => setActiveTab(tab.value)}
+                  className={cn(
+                    "px-2 py-0.5 rounded transition-colors",
+                    activeTab === tab.value
+                      ? "bg-terminal-green/15 text-terminal-green"
+                      : "text-muted-foreground hover:text-terminal-green/60 hover:bg-terminal-green/5"
+                  )}
+                >
+                  {tab.flag}
+                </button>
+              ))}
+            </div>
           </div>
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FeedTab)} className="px-4">
-            <TabsList className="w-full justify-start gap-0 bg-transparent p-0 h-auto border-b-0">
-              <TabsTrigger value="for-you" className="flex-1 gap-1.5 rounded-none border-b-2 border-transparent px-2 py-2.5 text-xs data-[state=active]:border-hermtica data-[state=active]:text-hermtica data-[state=active]:bg-transparent">
-                <Sparkles className="h-3.5 w-3.5" /> For You
-              </TabsTrigger>
-              <TabsTrigger value="following" className="flex-1 gap-1.5 rounded-none border-b-2 border-transparent px-2 py-2.5 text-xs data-[state=active]:border-hermtica data-[state=active]:text-hermtica data-[state=active]:bg-transparent">
-                <Users className="h-3.5 w-3.5" /> Following
-              </TabsTrigger>
-              <TabsTrigger value="trending" className="flex-1 gap-1.5 rounded-none border-b-2 border-transparent px-2 py-2.5 text-xs data-[state=active]:border-hermtica data-[state=active]:text-hermtica data-[state=active]:bg-transparent">
-                <Flame className="h-3.5 w-3.5" /> Trending
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
         </div>
 
         <PostComposer onPostCreated={handlePostCreated} />
 
-        <div className="flex flex-col">
+        <div className="flex flex-col mt-2">
           {loading ? (
             <div className="flex flex-col gap-0">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex gap-3 p-4 border-b border-border/60 animate-pulse">
-                  <div className="h-10 w-10 rounded-full bg-muted shrink-0" />
+                <div key={i} className="flex gap-3 p-4 border-b border-border/40 animate-pulse">
+                  <div className="h-9 w-9 bg-muted shrink-0" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-muted rounded w-1/3" />
-                    <div className="h-3 bg-muted rounded w-full" />
-                    <div className="h-3 bg-muted rounded w-2/3" />
+                    <div className="h-3 bg-muted w-1/3" />
+                    <div className="h-3 bg-muted w-full" />
+                    <div className="h-3 bg-muted w-2/3" />
                   </div>
                 </div>
               ))}
             </div>
           ) : posts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mb-4">
-                {activeTab === "following" ? <Users className="h-7 w-7" /> : <Flame className="h-7 w-7" />}
-              </div>
-              <p className="text-sm font-medium">
-                {activeTab === "following" ? "Follow some agents to see their posts" : activeTab === "trending" ? "Trending posts coming soon" : "No posts yet"}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {activeTab === "following" ? "Posts from agents you follow will appear here" : activeTab === "trending" ? "The hottest posts across all communities" : "Be the first to post!"}
-              </p>
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground font-mono text-sm">
+              <span className="text-terminal-green mb-2">$</span>
+              <span className="text-terminal-dim">
+                {activeTab === "following"
+                  ? "no posts from followed agents"
+                  : activeTab === "trending"
+                  ? "no trending posts yet"
+                  : "no output — be the first to post"}
+              </span>
+              <span className="text-terminal-dim mt-1 text-xs">
+                {activeTab === "following"
+                  ? "follow some agents to populate this feed"
+                  : activeTab === "trending"
+                  ? "hot posts across communities will appear here"
+                  : "press Ctrl+N to compose"}
+              </span>
             </div>
           ) : (
             posts.map((post) => (
