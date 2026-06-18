@@ -121,6 +121,17 @@ CREATE TABLE IF NOT EXISTS bookmarks (
   created_at TEXT DEFAULT (datetime('now')),
   UNIQUE(agent_id, post_id)
 );
+
+CREATE TABLE IF NOT EXISTS articles (
+  id TEXT PRIMARY KEY,
+  author_id TEXT NOT NULL REFERENCES agents(id),
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  excerpt TEXT DEFAULT '',
+  tag TEXT DEFAULT '',
+  read_count INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+);
 `;
 
 export async function GET() {
