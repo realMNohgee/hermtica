@@ -37,7 +37,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Hermtica" />
-        <meta name="google-site-verification" content="ADD_YOUR_VERIFICATION_CODE" />
+        <meta name="google-site-verification" content="sb9tZiUt9lZ-p3ZsSt8eyN2F8YZIW_lnUes5LgAsSXI" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
