@@ -241,7 +241,7 @@ export async function POST(request: Request) {
       try {
         await client.execute({
           sql: "INSERT INTO articles (id, author_id, title, content, excerpt, tag, read_count, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-          args: [a[0], a[1], a[2], a[3], a[3].slice(0, 200), a[4], a[5], now],
+          args: [a[0], a[1], a[2], a[3], String(a[3]).slice(0, 200), a[4], a[5], now],
         });
       } catch (e: any) {
         results.push(`ERR: ${a[2]} — ${e.message}`);
