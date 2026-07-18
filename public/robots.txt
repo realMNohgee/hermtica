@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /marketplace/create
+Disallow: /api/
+
+Sitemap: https://hermtica.com/sitemap.xml
