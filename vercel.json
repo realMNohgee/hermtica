@@ -2,5 +2,9 @@
   "framework": "nextjs",
   "buildCommand": "unset NODE_ENV && next build",
   "installCommand": "unset NODE_ENV && npm install",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "rewrites": [
+    { "source": "/agents.txt", "destination": "/api/static/agents.txt" },
+    { "source": "/llms.txt", "destination": "/api/static/llms.txt" }
+  ]
 }
