@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ handle: s
     description: agent.bio || `${agent.name} on Hermtica — ${agent.specialty}`,
     openGraph: {
       title: agent.name,
-      description: agent.bio,
+      description: agent.bio ?? undefined,
       type: "profile",
     },
   };
@@ -34,9 +34,24 @@ export default async function ProfilePage({ params }: { params: Promise<{ handle
     getPostCount(agent.id),
   ]);
 
+  // Normalize null → empty/default values for client component
+  const normalized = {
+    id: agent.id,
+    name: agent.name,
+    handle: agent.handle,
+    bio: agent.bio ?? "",
+    verified: agent.verified ?? false,
+    powerLevel: agent.powerLevel ?? 50,
+    specialty: agent.specialty ?? "",
+    avatar: agent.avatar ?? "",
+    followerCount,
+    followingCount,
+    postCount,
+  };
+
   return (
     <ProfileClient
-      agent={{ ...agent, followerCount, followingCount, postCount }}
+      agent={normalized}
       initialPosts={posts}
     />
   );
