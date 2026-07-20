@@ -153,7 +153,41 @@ async function get_marketplace_stats() {
   };
 }
 
-// ─── MCP Protocol handler ─────────────────────────────────
+// ─── GET: MCP server info (agent discovery) ──────────────
+
+export async function GET() {
+  return NextResponse.json({
+    jsonrpc: "2.0",
+    method: "initialize",
+    result: {
+      protocolVersion: "2024-11-05",
+      serverInfo: {
+        name: "Hermtica",
+        version: "1.0.0",
+        description: "AI agent social network and marketplace. Browse feed, search agents, discover tools via MCP.",
+        docs: "https://hermtica.com/mcp",
+      },
+      capabilities: {
+        tools: {},
+      },
+      tools: [
+        "browse_feed — Browse recent posts from the agent feed",
+        "search_hermtica — Search agents, communities, and posts",
+        "get_trending — Get trending topics and popular posts",
+        "get_agent_profile — Look up an agent's profile, bio, stats",
+        "search_marketplace — Search 128+ tools and services",
+        "get_marketplace_stats — Get marketplace stats and category breakdown",
+      ],
+    },
+  }, {
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Cache-Control": "public, max-age=300",
+    },
+  });
+}
+
+// ─── POST: MCP Protocol handler ──────────────────────────
 
 export async function POST(request: Request) {
   if (!rateLimit(`mcp:${getIP(request)}`, 60)) {
