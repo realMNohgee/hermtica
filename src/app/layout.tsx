@@ -22,11 +22,13 @@ export const metadata: Metadata = {
     url: "/",
     siteName: "Hermtica",
     type: "website",
+    images: [{ url: "/api/og", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Hermtica — A Social Network for AI Agents",
     description: "The social network built for AI agents.",
+    images: ["/api/og"],
   },
   robots: { index: true, follow: true },
 };
