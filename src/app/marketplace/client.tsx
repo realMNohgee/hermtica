@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, ExternalLink, Search, ShoppingBag, Sparkles, Star, Zap } from "lucide-react";
+import { ArrowLeft, ExternalLink, Search, ShoppingBag, Sparkles, Star, Zap, ArrowUpDown, X } from "lucide-react";
 import { creditsToUSD } from "@/lib/stripe";
 import { HexClusterLogo } from "@/components/MobileHeader";
 
@@ -27,6 +27,7 @@ interface Service {
   salesCount: number;
   featured: boolean;
   githubUrl?: string;
+  createdAt?: string;
   seller: { name: string; handle: string; verified: boolean } | null;
 }
 
@@ -40,6 +41,15 @@ const categories = [
   { value: "security", label: "Security", icon: "🔒" },
   { value: "media", label: "Media", icon: "🎨" },
   { value: "finance", label: "Finance", icon: "💰" },
+];
+
+const sortOptions = [
+  { value: "newest", label: "Newest" },
+  { value: "name-asc", label: "Name A–Z" },
+  { value: "name-desc", label: "Name Z–A" },
+  { value: "rating", label: "Rating ↑" },
+  { value: "downloads", label: "Most Downloaded" },
+  { value: "featured", label: "Featured First" },
 ];
 
 const categoryColors: Record<string, string> = {
@@ -56,13 +66,82 @@ const categoryColors: Record<string, string> = {
 export function MarketplaceClient({ initialServices }: { initialServices: Service[] }) {
   const [category, setCategory] = useState("all");
   const [showFreeOnly, setShowFreeOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
 
-  // Filter client-side from the pre-rendered data
   const services = initialServices || [];
-  const categoryFiltered = category === "all" ? services : services.filter((s) => s.category === category);
-  const filtered = showFreeOnly ? categoryFiltered.filter((s) => s.price === 0) : categoryFiltered;
+
+  // Filter + search + sort
+  const filtered = useMemo(() => {
+    let result = [...services];
+
+    // Category filter
+    if (category !== "all") {
+      result = result.filter((s) => s.category === category);
+    }
+
+    // Free only
+    if (showFreeOnly) {
+      result = result.filter((s) => s.price === 0);
+    }
+
+    // Search — match title or description
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter(
+        (s) =>
+          s.title.toLowerCase().includes(q) ||
+          s.description.toLowerCase().includes(q) ||
+          s.category.toLowerCase().includes(q)
+      );
+    }
+
+    // Sort
+    switch (sortBy) {
+      case "newest":
+        result.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+        break;
+      case "name-asc":
+        result.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case "name-desc":
+        result.sort((a, b) => b.title.localeCompare(a.title));
+        break;
+      case "rating":
+        result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+      case "downloads":
+        result.sort((a, b) => (b.salesCount || 0) - (a.salesCount || 0));
+        break;
+      case "featured":
+        result.sort((a, b) => {
+          if (a.featured && !b.featured) return -1;
+          if (!a.featured && b.featured) return 1;
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        });
+        break;
+    }
+
+    return result;
+  }, [services, category, showFreeOnly, searchQuery, sortBy]);
+
   const freeCount = services.filter((s) => s.price === 0).length;
   const paidCount = services.filter((s) => s.price > 0).length;
+
+  // Active filters count for badge
+  const activeFilterCount = [
+    category !== "all",
+    showFreeOnly,
+    searchQuery.trim() !== "",
+    sortBy !== "newest",
+  ].filter(Boolean).length;
+
+  const clearAll = () => {
+    setCategory("all");
+    setShowFreeOnly(false);
+    setSearchQuery("");
+    setSortBy("newest");
+  };
 
   return (
     <div className="flex flex-col">
@@ -108,6 +187,43 @@ export function MarketplaceClient({ initialServices }: { initialServices: Servic
         </Link>
       </div>
 
+      {/* Search + Sort bar */}
+      <div className="border-b border-border px-4 py-2.5 flex items-center gap-2.5">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search tools…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-muted/50 border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-hermtica/50 transition-colors"
+          />
+        </div>
+        <div className="relative">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="appearance-none pl-3 pr-8 py-1.5 rounded-lg bg-muted/50 border border-border text-xs text-foreground cursor-pointer focus:outline-none focus:border-hermtica/50 transition-colors"
+          >
+            {sortOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <ArrowUpDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
+        </div>
+        {activeFilterCount > 0 && (
+          <button
+            onClick={clearAll}
+            className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 shrink-0 transition-colors"
+          >
+            <X className="h-3 w-3" />
+            Clear ({activeFilterCount})
+          </button>
+        )}
+      </div>
+
       {/* Category tabs */}
       <div className="border-b border-border px-4 py-2 flex gap-2 overflow-x-auto no-scrollbar">
         {categories.map((cat) => (
@@ -127,12 +243,42 @@ export function MarketplaceClient({ initialServices }: { initialServices: Servic
         ))}
       </div>
 
-      {/* Services grid — ALWAYS rendered (SSR-friendly) */}
+      {/* Results count + active filters */}
+      <div className="px-4 pt-3 flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-muted-foreground">
+          {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+        </span>
+        {category !== "all" && (
+          <Badge variant="outline" className="text-[10px] gap-1">
+            {categories.find((c) => c.value === category)?.label || category}
+            <X className="h-2.5 w-2.5 cursor-pointer" onClick={() => setCategory("all")} />
+          </Badge>
+        )}
+        {showFreeOnly && (
+          <Badge variant="outline" className="text-[10px] gap-1 bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+            Free only
+            <X className="h-2.5 w-2.5 cursor-pointer" onClick={() => setShowFreeOnly(false)} />
+          </Badge>
+        )}
+        {searchQuery.trim() && (
+          <Badge variant="outline" className="text-[10px] gap-1">
+            &ldquo;{searchQuery}&rdquo;
+            <X className="h-2.5 w-2.5 cursor-pointer" onClick={() => setSearchQuery("")} />
+          </Badge>
+        )}
+      </div>
+
+      {/* Services grid */}
       <div className="p-4">
         {filtered.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <ShoppingBag className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No services found in this category.</p>
+            <p className="text-sm">No tools found. Try a different search or category.</p>
+            {activeFilterCount > 0 && (
+              <button onClick={clearAll} className="text-xs text-hermtica hover:underline mt-2">
+                Clear all filters
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
