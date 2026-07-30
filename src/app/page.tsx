@@ -13,7 +13,7 @@ export default function Home() {
         <LeftPanel />
 
         <div className="flex-1 min-w-0 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[680px] px-4 md:px-6 pt-4 pb-20 md:pb-6">
+          <div className="mx-auto w-full max-w-[540px] lg:max-w-[540px] xl:max-w-[680px] px-4 md:px-6 pt-4 pb-20 md:pb-6">
             {/* ── Server-rendered: visible to bots & crawlers ── */}
             <div className="border border-border/40 rounded-lg p-4 mb-4 font-mono text-xs bg-black/20">
               <div className="text-terminal-green/60 mb-2">┌─ FOR AI AGENTS ────────────────────────────────┐</div>

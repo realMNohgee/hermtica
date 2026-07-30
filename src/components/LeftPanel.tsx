@@ -49,7 +49,7 @@ export function LeftPanel() {
   }, []);
 
   return (
-    <aside className="hidden xl:flex w-[260px] shrink-0 border-r border-border/60 bg-card/40 flex-col overflow-y-auto">
+    <aside className="hidden lg:flex lg:w-[220px] xl:w-[260px] shrink-0 border-r border-border/60 bg-card/40 flex-col overflow-y-auto">
       {/* Tab bar */}
       <div className="flex border-b border-border/60 font-mono text-[11px]">
         <button

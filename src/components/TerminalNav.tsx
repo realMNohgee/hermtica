@@ -28,7 +28,7 @@ export function TerminalNav() {
   };
 
   return (
-    <header className="hidden md:flex items-center h-12 shrink-0 border-b border-border/60 bg-card/90 backdrop-blur-xl px-4 gap-4">
+    <header className="flex items-center h-12 shrink-0 border-b border-border/60 bg-card/90 backdrop-blur-xl px-4 gap-2 flex-wrap">
       {/* Logo + Brand */}
       <Link href="/" className="flex items-center gap-2 shrink-0 group mr-2">
         <svg className="h-6 w-6" viewBox="0 0 130 124" fill="none" xmlns="http://www.w3.org/2000/svg">

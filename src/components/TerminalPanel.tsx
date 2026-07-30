@@ -38,7 +38,7 @@ export function TerminalPanel() {
   }, []);
 
   return (
-    <aside className="hidden xl:block w-[280px] shrink-0 border-l border-border/60 bg-card/50 overflow-y-auto">
+    <aside className="hidden lg:block lg:w-[240px] xl:w-[280px] shrink-0 border-l border-border/60 bg-card/50 overflow-y-auto">
       <div className="p-4 space-y-5">
         {/* System info header */}
         <div className="font-mono">
