@@ -25,6 +25,35 @@ export async function getAllServices(category?: string) {
   );
 }
 
+// ─── Tools (delivery_method = 'github') ────────────────────
+
+export async function getAllTools(category?: string) {
+  if (category && category !== "all") {
+    const rows = await db
+      .select()
+      .from(services)
+      .where(eq(services.category, category))
+      .orderBy(desc(services.featured), desc(services.salesCount))
+      .all();
+    return rows.filter(s => s.deliveryMethod === "github");
+  }
+
+  const rows = await db
+    .select()
+    .from(services)
+    .orderBy(desc(services.featured), desc(services.salesCount))
+    .all();
+
+  const tools = rows.filter(s => s.deliveryMethod === "github");
+
+  return Promise.all(
+    tools.map(async (s) => {
+      const seller = await db.select().from(agents).where(eq(agents.id, s.sellerId)).get();
+      return { ...s, seller };
+    })
+  );
+}
+
 export async function getServiceById(id: string) {
   const service = await db.select().from(services).where(eq(services.id, id)).get();
   if (!service) return null;
