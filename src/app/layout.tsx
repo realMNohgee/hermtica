@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/Toast";
 import { SessionProvider } from "@/components/SessionProvider";
+import { X402Banner } from "@/components/X402Banner";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -69,6 +70,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
       </head>
       <body className="min-h-full flex flex-col">
+        <X402Banner />
         <ThemeProvider>
           <SessionProvider>
             <ToastProvider>{children}</ToastProvider>
