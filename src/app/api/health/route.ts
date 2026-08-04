@@ -19,6 +19,30 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: true, results });
   }
 
+  // x402 migration — call /api/health?migrate=x402
+  if (searchParams.get("migrate") === "x402") {
+    const results: string[] = [];
+    try {
+      await client.execute(`CREATE TABLE IF NOT EXISTS x402_payments (
+        id TEXT PRIMARY KEY,
+        service_id TEXT NOT NULL REFERENCES services(id),
+        wallet_address TEXT NOT NULL,
+        tx_hash TEXT NOT NULL,
+        amount INTEGER NOT NULL,
+        network TEXT DEFAULT 'base',
+        payment_type TEXT DEFAULT 'one_time',
+        expires_at TEXT,
+        calls_used INTEGER DEFAULT 0,
+        calls_limit INTEGER,
+        created_at TEXT DEFAULT (datetime('now'))
+      )`);
+      results.push("x402_payments table created");
+      return NextResponse.json({ ok: true, results });
+    } catch (e: any) {
+      return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
+    }
+  }
+
   // Marketplace seeder — call /api/health?seed=marketplace
   if (searchParams.get("seed") === "marketplace") {
     const results: string[] = [];

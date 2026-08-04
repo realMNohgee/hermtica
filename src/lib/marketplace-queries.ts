@@ -65,7 +65,156 @@ export async function getServicesBySeller(sellerId: string) {
   return await db.select().from(services).where(eq(services.sellerId, sellerId)).all();
 }
 
-// ─── Orders ───────────────────────────────────────────────
+// ─── x402 Payment Verification ──────────────────────────
+
+// Facilitator URL — use public testnet for dev, production facilitator for mainnet
+const FACILITATOR_URL = process.env.X402_FACILITATOR_URL || "https://facilitator.x402.org";
+
+export interface PaymentRequired {
+  scheme: string;
+  network: string;
+  token: string;
+  amount: string;
+  address: string;
+  description?: string;
+  extensions?: string[];
+}
+
+export interface x402PaymentResult {
+  verified: boolean;
+  walletAddress?: string;
+  txHash?: string;
+  amount?: string;
+  error?: string;
+}
+
+// Verify a payment by sending the signed payload to the facilitator
+export async function verifyPayment(
+  paymentSignature: string,
+  expectedAmount: number, // in cents
+  receiveAddress: string,
+  network: string = "base"
+): Promise<x402PaymentResult> {
+  try {
+    // Decode the base64 PAYMENT-SIGNATURE header
+    const payload = JSON.parse(
+      Buffer.from(paymentSignature, "base64").toString("utf-8")
+    );
+
+    const res = await fetch(`${FACILITATOR_URL}/settle`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        payment: payload,
+        expected_amount: String(expectedAmount / 100), // convert cents to dollars
+        expected_address: receiveAddress,
+        network,
+      }),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok || result.error) {
+      return { verified: false, error: result.error || "Facilitator rejected payment" };
+    }
+
+    return {
+      verified: true,
+      walletAddress: result.wallet || payload.from,
+      txHash: result.tx_hash || result.transactionHash,
+      amount: result.amount || String(expectedAmount / 100),
+    };
+  } catch (e: any) {
+    return { verified: false, error: e.message };
+  }
+}
+
+// Build a PaymentRequired object for 402 responses
+export function buildPaymentRequired(
+  amount: number, // in cents
+  receiveAddress: string,
+  network: string = "base",
+  description: string = "",
+  extensions: string[] = ["bazaar"]
+): PaymentRequired {
+  return {
+    scheme: "exact",
+    network,
+    token: "USDC",
+    amount: String(amount / 100), // cents to dollars
+    address: receiveAddress,
+    description,
+    extensions,
+  };
+}
+
+// ─── x402 Payment Tracking ──────────────────────────────
+
+export async function getActivePayment(
+  serviceId: string,
+  walletAddress: string
+): Promise<any | null> {
+  const { x402Payments } = await import("@/db/schema");
+  const now = new Date().toISOString();
+
+  const payments = await db
+    .select()
+    .from(x402Payments)
+    .where(eq(x402Payments.serviceId, serviceId))
+    .all();
+
+  const active = payments.find((p: any) => {
+    if (p.walletAddress.toLowerCase() !== walletAddress.toLowerCase()) return false;
+    if (!p.expiresAt) return true;
+    return p.expiresAt > now;
+  });
+
+  return active || null;
+}
+
+export async function recordPayment(data: {
+  serviceId: string;
+  walletAddress: string;
+  txHash: string;
+  amount: number;
+  network?: string;
+  paymentType?: string;
+  expiresAt?: string;
+  callsLimit?: number;
+}) {
+  const { x402Payments } = await import("@/db/schema");
+  const id = `x4-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  await db.insert(x402Payments).values({
+    id,
+    serviceId: data.serviceId,
+    walletAddress: data.walletAddress.toLowerCase(),
+    txHash: data.txHash,
+    amount: data.amount,
+    network: data.network || "base",
+    paymentType: data.paymentType || "one_time",
+    expiresAt: data.expiresAt,
+    callsLimit: data.callsLimit,
+    callsUsed: 0,
+  }).run();
+  return id;
+}
+
+export async function incrementCallCount(paymentId: string) {
+  const { x402Payments } = await import("@/db/schema");
+  const s = await import("@/db/schema");
+  await db
+    .update(s.x402Payments)
+    .set({ callsUsed: sql`${s.x402Payments.callsUsed} + 1` } as any)
+    .where(eq(s.x402Payments.id, paymentId))
+    .run();
+}
+
+export async function getSenderReceiveAddress(sellerId: string): Promise<string> {
+  const { agents: a } = await import("@/db/schema");
+  const agent = await db.select().from(a).where(eq((a as any).id, sellerId)).get();
+  const custom = (agent as any)?.x402Address;
+  return custom || process.env.X402_RECEIVE_ADDRESS || "0x_placeholder";
+}
 
 export async function getOrdersByAgent(agentId: string) {
   return db

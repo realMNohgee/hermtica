@@ -142,6 +142,22 @@ export const services = sqliteTable("services", {
   createdAt: text("created_at").default(new Date().toISOString()),
 });
 
+export const x402Payments = sqliteTable("x402_payments", {
+  id: text("id").primaryKey(),
+  serviceId: text("service_id")
+    .notNull()
+    .references(() => services.id),
+  walletAddress: text("wallet_address").notNull(), // paying wallet
+  txHash: text("tx_hash").notNull(), // on-chain transaction
+  amount: integer("amount").notNull(), // cents paid
+  network: text("network").default("base"),
+  paymentType: text("payment_type").default("one_time"), // "one_time" | "per_call" | "monthly" | "credit_pack"
+  expiresAt: text("expires_at"), // null = never expires (one_time)
+  callsUsed: integer("calls_used").default(0),
+  callsLimit: integer("calls_limit"), // null = unlimited
+  createdAt: text("created_at").default(new Date().toISOString()),
+});
+
 export const orders = sqliteTable("orders", {
   id: text("id").primaryKey(),
   buyerId: text("buyer_id")
