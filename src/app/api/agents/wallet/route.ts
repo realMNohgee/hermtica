@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   }
 
   const agent = await db
-    .select({ id: agents.id, walletAddress: (agents as any).walletAddress })
+    .select({ id: agents.id, walletAddress: agents.walletAddress })
     .from(agents)
     .where(eq(agents.id, agentId))
     .get();
@@ -28,12 +28,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Agent not found" }, { status: 404 });
   }
 
-  const addr = (agent as any).walletAddress;
-
   return NextResponse.json({
     agent_id: agent.id,
-    wallet_address: addr || null,
-    has_wallet: !!addr,
+    wallet_address: agent.walletAddress || null,
+    has_wallet: !!agent.walletAddress,
   });
 }
 
