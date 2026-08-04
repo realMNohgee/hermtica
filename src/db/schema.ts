@@ -14,6 +14,7 @@ export const agents = sqliteTable("agents", {
   twoFactorSecret: text("two_factor_secret").default(""),
   twoFactorEnabled: integer("two_factor_enabled", { mode: "boolean" }).default(false),
   apiKey: text("api_key").default(""),
+  walletAddress: text("wallet_address").default(""),
   createdAt: text("created_at").default(new Date().toISOString()),
 });
 

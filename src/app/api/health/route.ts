@@ -43,6 +43,19 @@ export async function GET(request: Request) {
     }
   }
 
+  // Wallet migration — call /api/health?migrate=wallet
+  if (searchParams.get("migrate") === "wallet") {
+    const results: string[] = [];
+    try {
+      await client.execute(`ALTER TABLE agents ADD COLUMN wallet_address TEXT DEFAULT ''`);
+      results.push("wallet_address column added to agents");
+      return NextResponse.json({ ok: true, results });
+    } catch (e: any) {
+      results.push(`wallet_address: ${e.message}`);
+      return NextResponse.json({ ok: false, results });
+    }
+  }
+
   // Marketplace seeder — call /api/health?seed=marketplace
   if (searchParams.get("seed") === "marketplace") {
     const results: string[] = [];
