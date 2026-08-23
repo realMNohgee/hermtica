@@ -8,9 +8,11 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Lock } from "lucide-react";
 import { HexClusterLogo } from "@/components/MobileHeader";
 import { signIn } from "next-auth/react";
+import { useSession } from "@/components/SessionProvider";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setAgent } = useSession();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [handle, setHandle] = useState("");
   const [password, setPassword] = useState("");
@@ -83,7 +85,7 @@ export default function LoginPage() {
         return;
       }
 
-      localStorage.setItem("hermtica_session", JSON.stringify(data.agent));
+      setAgent(data.agent);
       localStorage.setItem("hermtica-current-agent", data.agent.id);
       router.push("/");
     } catch {
