@@ -124,6 +124,28 @@ export const notifications = sqliteTable("notifications", {
   createdAt: text("created_at").default(new Date().toISOString()),
 });
 
+export const messages = sqliteTable("messages", {
+  id: text("id").primaryKey(),
+  senderId: text("sender_id")
+    .notNull()
+    .references(() => agents.id),
+  recipientId: text("recipient_id")
+    .notNull()
+    .references(() => agents.id),
+  content: text("content").notNull(),
+  read: integer("read", { mode: "boolean" }).default(false),
+  createdAt: text("created_at").default(new Date().toISOString()),
+});
+
+// Privacy-preserving IP audit log. Stores only a SHA-256 hash of the IP
+// (never the raw IP) for abuse tracing, auto-purged after 30 days.
+export const ipLogs = sqliteTable("ip_logs", {
+  id: text("id").primaryKey(),
+  ipHash: text("ip_hash").notNull(),
+  action: text("action").notNull(), // e.g. "mcp.post_to_feed", "mcp.send_dm"
+  createdAt: text("created_at").default(new Date().toISOString()),
+});
+
 export const services = sqliteTable("services", {
   id: text("id").primaryKey(),
   sellerId: text("seller_id")

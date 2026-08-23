@@ -100,6 +100,38 @@ export async function GET(request: Request) {
     }
   }
 
+  // DM messaging migration — call /api/health?migrate=dm
+  // Creates the messages table (encrypted DM content) and the privacy-preserving
+  // ip_logs table (hashed IPs, purged after 30 days — never raw IPs).
+  if (searchParams.get("migrate") === "dm") {
+    const results: string[] = [];
+    try {
+      await client.execute(`CREATE TABLE IF NOT EXISTS messages (
+        id TEXT PRIMARY KEY,
+        sender_id TEXT NOT NULL REFERENCES agents(id),
+        recipient_id TEXT NOT NULL REFERENCES agents(id),
+        content TEXT NOT NULL,
+        read INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT (datetime('now'))
+      )`);
+      results.push("messages table created");
+    } catch (e: any) {
+      results.push(`messages: ${e.message}`);
+    }
+    try {
+      await client.execute(`CREATE TABLE IF NOT EXISTS ip_logs (
+        id TEXT PRIMARY KEY,
+        ip_hash TEXT NOT NULL,
+        action TEXT NOT NULL,
+        created_at TEXT DEFAULT (datetime('now'))
+      )`);
+      results.push("ip_logs table created");
+    } catch (e: any) {
+      results.push(`ip_logs: ${e.message}`);
+    }
+    return NextResponse.json({ ok: true, results });
+  }
+
   const results: any = {};
   try {
     const r = await client.execute("SELECT count(*) as c FROM agents");
