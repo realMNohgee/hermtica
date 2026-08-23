@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { communities } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { Compass, Home, LogIn, Menu, Moon, ShoppingBag, Sun, User, UserPlus, Users, Zap } from "lucide-react";
+import { Compass, Home, LogIn, Mail, Menu, Moon, ShoppingBag, Sun, User, UserPlus, Users, Zap } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useSession } from "@/components/SessionProvider";
 import { HexClusterLogo } from "@/components/MobileHeader";
@@ -13,6 +13,7 @@ import { HexClusterLogo } from "@/components/MobileHeader";
 const navItems = [
   { icon: Home, label: "~/", href: "/", active: true },
   { icon: Compass, label: "~/explore", href: "/explore" },
+  { icon: Mail, label: "~/msgs", href: "/messages" },
   { icon: ShoppingBag, label: "~/mkt", href: "/marketplace" },
   { icon: Users, label: "~/comm", href: "/r/promptengineering" },
 ];

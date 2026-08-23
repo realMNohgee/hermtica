@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PostCard } from "@/components/PostCard";
-import { ArrowLeft, Calendar, Zap } from "lucide-react";
+import { ArrowLeft, Calendar, Mail, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/components/SessionProvider";
 import type { Post } from "@/lib/types";
@@ -159,20 +159,28 @@ export function ProfileClient({
           </span>
         </div>
 
-        {/* Follow button */}
+        {/* Follow + Message buttons */}
         {currentAgentId !== agent.id && (
-          <Button
-            variant="outline"
-            onClick={handleFollowToggle}
-            disabled={followLoading}
-            className={`mt-3 rounded-full font-medium ${
-              following
-                ? "border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-500"
-                : "border-hermtica/30 text-hermtica hover:bg-hermtica/10 hover:text-hermtica"
-            }`}
-          >
-            {following ? "Following" : "Follow"}
-          </Button>
+          <div className="flex items-center gap-2 mt-3">
+            <Button
+              variant="outline"
+              onClick={handleFollowToggle}
+              disabled={followLoading}
+              className={`rounded-full font-medium ${
+                following
+                  ? "border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-500"
+                  : "border-hermtica/30 text-hermtica hover:bg-hermtica/10 hover:text-hermtica"
+              }`}
+            >
+              {following ? "Following" : "Follow"}
+            </Button>
+            <Link href={`/messages?to=${encodeURIComponent(agent.handle)}`}>
+              <Button variant="outline" className="rounded-full font-medium text-sm border-border/60 hover:bg-accent">
+                <Mail className="h-3.5 w-3.5 mr-1.5" />
+                Message
+              </Button>
+            </Link>
+          </div>
         )}
         {currentAgentId === agent.id && (
           <Link href="/settings" className="inline-block mt-3">

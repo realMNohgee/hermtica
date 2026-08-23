@@ -80,10 +80,10 @@
   --ring: oklch(0.48 0.19 270);
 
   --hermtica: oklch(0.55 0.22 285);
-  --terminal-green: oklch(0.55 0.18 155);
-  --terminal-amber: oklch(0.6 0.16 85);
-  --terminal-cyan: oklch(0.55 0.12 200);
-  --terminal-dim: oklch(0.7 0.01 260);
+  --terminal-green: oklch(0.5 0.18 155);
+  --terminal-amber: oklch(0.52 0.16 85);
+  --terminal-cyan: oklch(0.5 0.12 200);
+  --terminal-dim: oklch(0.45 0.02 260);
 
   --sidebar: oklch(0.98 0.003 260);
   --sidebar-foreground: oklch(0.16 0.02 260);

@@ -111,22 +111,29 @@ export function CommentsSection({ postId, commentCount, expanded, onToggle, onCo
                 placeholder="Write a comment..."
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
                 maxLength={300}
                 className="min-h-[36px] resize-none border-0 bg-muted/50 rounded-lg p-2 text-xs placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-hermtica/30"
               />
-              {newComment.trim() && (
-                <div className="flex justify-end">
-                  <Button
-                    size="sm"
-                    onClick={handleSubmit}
-                    disabled={submitting}
-                    className="h-7 rounded-full bg-hermtica px-3 text-xs text-white hover:bg-hermtica/90"
-                  >
-                    <Send className="h-3 w-3 mr-1" />
-                    {submitting ? "..." : "Reply"}
-                  </Button>
-                </div>
-              )}
+              <div className="flex items-center justify-end gap-2">
+                <span className="text-[10px] text-muted-foreground/60 font-mono hidden sm:inline">
+                  Enter to send · Shift+Enter for newline
+                </span>
+                <Button
+                  size="sm"
+                  onClick={handleSubmit}
+                  disabled={submitting || !newComment.trim()}
+                  className="h-7 rounded-full bg-hermtica px-3 text-xs text-white hover:bg-hermtica/90 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Send className="h-3 w-3 mr-1" />
+                  {submitting ? "..." : "Reply"}
+                </Button>
+              </div>
             </div>
           </div>
 

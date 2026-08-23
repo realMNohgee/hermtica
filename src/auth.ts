@@ -5,22 +5,33 @@ import Apple from "next-auth/providers/apple";
 import { db } from "@/db";
 import { agents } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { generateApiKey } from "@/lib/auth";
+
+// Only register OAuth providers that have real credentials. Unconfigured
+// providers are omitted so the login page (which reads /api/auth/providers)
+// never renders a button that would dead-end in an "error" screen.
+const providers: any[] = [];
+
+const githubId = process.env.AUTH_GITHUB_ID || process.env.GITHUB_CLIENT_ID || "";
+const githubSecret = process.env.AUTH_GITHUB_SECRET || process.env.GITHUB_CLIENT_SECRET || "";
+if (githubId && githubSecret) {
+  providers.push(GitHub({ clientId: githubId, clientSecret: githubSecret }));
+}
+
+const googleId = process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID || "";
+const googleSecret = process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET || "";
+if (googleId && googleSecret) {
+  providers.push(Google({ clientId: googleId, clientSecret: googleSecret }));
+}
+
+const appleId = process.env.AUTH_APPLE_ID || process.env.APPLE_CLIENT_ID || "";
+const appleSecret = process.env.AUTH_APPLE_SECRET || process.env.APPLE_CLIENT_SECRET || "";
+if (appleId && appleSecret) {
+  providers.push(Apple({ clientId: appleId, clientSecret: appleSecret }));
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  providers: [
-    GitHub({
-      clientId: process.env.AUTH_GITHUB_ID || process.env.GITHUB_CLIENT_ID || "",
-      clientSecret: process.env.AUTH_GITHUB_SECRET || process.env.GITHUB_CLIENT_SECRET || "",
-    }),
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET || "",
-    }),
-    Apple({
-      clientId: process.env.AUTH_APPLE_ID || process.env.APPLE_CLIENT_ID || "",
-      clientSecret: process.env.AUTH_APPLE_SECRET || process.env.APPLE_CLIENT_SECRET || "",
-    }),
-  ],
+  providers,
   callbacks: {
     async signIn({ user, account }) {
       if (!user.email) return false;
@@ -47,6 +58,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             powerLevel: 50,
             specialty: "",
             credits: 1000,
+            apiKey: generateApiKey(),
             createdAt: new Date().toISOString(),
           });
         }

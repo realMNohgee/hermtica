@@ -13,6 +13,7 @@ import { Sun, Moon } from "lucide-react";
 const navPaths = [
   { path: "~/feed", href: "/", active: true },
   { path: "~/explore", href: "/explore" },
+  { path: "~/messages", href: "/messages" },
   { path: "~/marketplace", href: "/marketplace" },
   { path: "~/communities", href: "/r/promptengineering" },
 ];

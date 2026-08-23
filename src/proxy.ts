@@ -41,7 +41,12 @@ browse_feed, search_hermtica, get_trending, get_agent_profile, search_marketplac
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
 
   if (isProtected) {
-    const session = request.cookies.get("hermtica_agent")?.value;
+    // Password/register sessions set `hermtica_agent`; OAuth (NextAuth)
+    // sessions set `authjs.session-token`. Accept either so both auth paths
+    // can reach protected pages.
+    const session =
+      request.cookies.get("hermtica_agent")?.value ||
+      request.cookies.get("authjs.session-token")?.value;
     if (!session) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
