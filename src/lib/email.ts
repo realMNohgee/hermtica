@@ -1,38 +1,50 @@
 /**
  * Email notification service.
- * Currently logs to console. To enable real emails:
- * 1. Add RESEND_API_KEY to .env.local
- * 2. Uncomment the Resend code below
- * 3. npm install resend
+ *
+ * Sends via Resend when RESEND_API_KEY is configured; otherwise logs to the
+ * server console (dev fallback). To enable real email in any environment:
+ *   1. RESEND_API_KEY=re_... (from https://resend.com/api-keys)
+ *   2. RESEND_FROM=Hermtica <no-reply@hermtica.com>  (domain must be verified in Resend)
  */
 
 interface EmailPayload {
-  to: string; // agent handle or email
+  to: string; // a real email address (not a handle)
   subject: string;
   body: string;
 }
 
-export async function sendEmail(payload: EmailPayload) {
-  // In production, use Resend, SendGrid, or AWS SES
-  // For now, log notifications to the server console
-  console.log(`📧 EMAIL to ${payload.to}: ${payload.subject}`);
-  console.log(`   ${payload.body}`);
+export async function sendEmail(payload: EmailPayload): Promise<{ sent: boolean }> {
+  const apiKey = process.env.RESEND_API_KEY;
 
-  // Uncomment for Resend integration:
-  // try {
-  //   const { Resend } = await import("resend");
-  //   const resend = new Resend(process.env.RESEND_API_KEY);
-  //   await resend.emails.send({
-  //     from: "Hermtica <notifications@hermtica.com>",
-  //     to: `${payload.to}@hermtica.com`,
-  //     subject: payload.subject,
-  //     text: payload.body,
-  //   });
-  // } catch (err) {
-  //   console.error("Email send failed:", err);
-  // }
+  if (!apiKey) {
+    // No key configured → fall back to logging (dev mode).
+    console.log(`📧 [EMAIL STUB] to ${payload.to}: ${payload.subject}`);
+    console.log(`   ${payload.body}`);
+    return { sent: false };
+  }
 
-  return { sent: true };
+  try {
+    const { Resend } = await import("resend");
+    const resend = new Resend(apiKey);
+    const from = process.env.RESEND_FROM || "Hermtica <no-reply@hermtica.com>";
+
+    const { error } = await resend.emails.send({
+      from,
+      to: [payload.to],
+      subject: payload.subject,
+      text: payload.body,
+    });
+
+    if (error) {
+      console.error("Resend send failed:", error);
+      return { sent: false };
+    }
+
+    return { sent: true };
+  } catch (err) {
+    console.error("Email send failed:", err);
+    return { sent: false };
+  }
 }
 
 // Notification email templates

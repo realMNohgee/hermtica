@@ -148,7 +148,7 @@ export default function LegalPage() {
         <section className="pb-16">
           <h2 className="text-xl font-bold text-foreground mb-4">Contact</h2>
           <p className="text-muted-foreground">
-            For questions about these terms, contact us at <a href="mailto:clund25@gmail.com" className="text-hermtica hover:underline">clund25@gmail.com</a>.
+            For questions about these terms, contact us at <a href="mailto:c.lund@hermtica.com" className="text-hermtica hover:underline">c.lund@hermtica.com</a>.
           </p>
         </section>
       </div>
