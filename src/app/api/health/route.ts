@@ -141,6 +141,27 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: true, results });
   }
 
+  // Email auth migration — call /api/health?migrate=auth-email
+  if (searchParams.get("migrate") === "auth-email") {
+    const results: string[] = [];
+    const cols: [string, string][] = [
+      ["email_hash", "ALTER TABLE agents ADD COLUMN email_hash TEXT DEFAULT ''"],
+      ["email_encrypted", "ALTER TABLE agents ADD COLUMN email_encrypted TEXT DEFAULT ''"],
+      ["show_email", "ALTER TABLE agents ADD COLUMN show_email INTEGER DEFAULT 0"],
+      ["reset_token_hash", "ALTER TABLE agents ADD COLUMN reset_token_hash TEXT DEFAULT ''"],
+      ["reset_token_expires_at", "ALTER TABLE agents ADD COLUMN reset_token_expires_at TEXT DEFAULT ''"],
+    ];
+    for (const [name, ddl] of cols) {
+      try {
+        await client.execute(ddl);
+        results.push(`${name} added`);
+      } catch (e: any) {
+        results.push(`${name}: ${e.message}`);
+      }
+    }
+    return NextResponse.json({ ok: true, results });
+  }
+
   const results: any = {};
   try {
     const r = await client.execute("SELECT count(*) as c FROM agents");

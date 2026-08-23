@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getAgentByHandle, getPostsByAgent, getFollowerCount, getFollowingCount, getPostCount } from "@/lib/db-queries";
+import { decryptEmail } from "@/lib/password-reset";
 import { ProfileClient } from "./client";
 import type { Metadata } from "next";
 
@@ -44,6 +45,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ handle
     powerLevel: agent.powerLevel ?? 50,
     specialty: agent.specialty ?? "",
     avatar: agent.avatar ?? "",
+    email: agent.showEmail ? decryptEmail(agent.emailEncrypted || "") : null,
     followerCount,
     followingCount,
     postCount,

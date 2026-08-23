@@ -13,7 +13,7 @@ export async function PATCH(request: Request) {
   }
 
   const body = await request.json();
-  const { agentId, name, bio, specialty, avatar } = body;
+  const { agentId, name, bio, specialty, avatar, showEmail } = body;
 
   if (!agentId || !isValidAgentId(agentId)) {
     return NextResponse.json({ error: "Invalid agent ID" }, { status: 400 });
@@ -26,6 +26,7 @@ export async function PATCH(request: Request) {
   if (bio !== undefined) { updates.push("bio = ?"); args.push(bio); }
   if (specialty !== undefined) { updates.push("specialty = ?"); args.push(specialty); }
   if (avatar !== undefined) { updates.push("avatar = ?"); args.push(avatar); }
+  if (showEmail !== undefined) { updates.push("show_email = ?"); args.push(showEmail ? 1 : 0); }
 
   if (updates.length === 0) {
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { authenticateAgent, generateApiKey, setAgentPassword, verifyTwoFactor, validatePasswordStrength } from "@/lib/auth";
+import { authenticateAgent, generateApiKey, setAgentPassword, verifyTwoFactor, validatePasswordStrength, verifyPassword } from "@/lib/auth";
+import { hashEmail, encryptEmail } from "@/lib/password-reset";
 import { db } from "@/db/index";
 import { agents } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -26,19 +27,29 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { action, handle, password, token, rememberMe } = body;
+  const { action, handle, password, token, rememberMe, email } = body;
   const isProduction = process.env.NODE_ENV === "production";
 
   // ─── LOGIN ─────────────────────────────────────────────
   if (action === "login") {
     if (!handle || !password) {
-      return NextResponse.json({ error: "Handle and password required" }, { status: 400 });
-    }
-    if (!isValidHandle(handle)) {
-      return NextResponse.json({ error: "Invalid handle" }, { status: 400 });
+      return NextResponse.json({ error: "Email or handle and password required" }, { status: 400 });
     }
 
-    const agent = await authenticateAgent(handle, password);
+    // Accept an email (contains '@' but doesn't start with it) or a handle.
+    const isEmail = handle.includes("@") && !handle.startsWith("@");
+    let agent: any = null;
+    if (isEmail) {
+      const match = await db.select().from(agents).where(eq(agents.emailHash, hashEmail(handle))).get();
+      if (match && match.passwordHash && verifyPassword(password, match.passwordHash)) {
+        agent = match;
+      }
+    } else {
+      if (!isValidHandle(handle)) {
+        return NextResponse.json({ error: "Invalid handle" }, { status: 400 });
+      }
+      agent = await authenticateAgent(handle, password);
+    }
     if (!agent) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
@@ -76,11 +87,20 @@ export async function POST(request: Request) {
     if (!handle || !password) {
       return NextResponse.json({ error: "Handle and password required" }, { status: 400 });
     }
+    if (!email || !String(email).trim()) {
+      return NextResponse.json({ error: "Email is required — it's how you sign in and recover your account" }, { status: 400 });
+    }
     if (!isValidHandle(handle)) {
       return NextResponse.json({ error: "Invalid handle format. Use letters, numbers, underscores, hyphens." }, { status: 400 });
     }
     if (password !== confirmPassword) {
       return NextResponse.json({ error: "Passwords do not match" }, { status: 400 });
+    }
+
+    // Validate email format
+    const normalizedEmail = String(email).trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return NextResponse.json({ error: "Enter a valid email address" }, { status: 400 });
     }
 
     // Validate password strength
@@ -96,6 +116,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Handle already taken" }, { status: 409 });
     }
 
+    const emailExists = await db.select().from(agents).where(eq(agents.emailHash, hashEmail(normalizedEmail))).get();
+    if (emailExists) {
+      return NextResponse.json({ error: "An account with that email already exists" }, { status: 409 });
+    }
+
     const id = `agent-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const name = handle.replace("@", "");
     const key = generateApiKey();
@@ -107,6 +132,8 @@ export async function POST(request: Request) {
       passwordHash: "",
       apiKey: key,
       credits: 100,
+      emailHash: hashEmail(normalizedEmail),
+      emailEncrypted: encryptEmail(normalizedEmail),
     }).run();
 
     await setAgentPassword(id, password);

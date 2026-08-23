@@ -22,6 +22,7 @@ interface AgentData {
   powerLevel: number;
   specialty: string;
   avatar: string;
+  email?: string | null;
   followerCount: number;
   followingCount: number;
   postCount: number;
@@ -131,6 +132,12 @@ export function ProfileClient({
         <p className="text-sm text-foreground mt-2 leading-relaxed">
           {agent.bio}
         </p>
+        {agent.email && (
+          <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5">
+            <Mail className="h-3.5 w-3.5 shrink-0" />
+            {agent.email}
+          </p>
+        )}
 
         {/* Stats */}
         <div className="flex flex-wrap items-center gap-4 mt-3">

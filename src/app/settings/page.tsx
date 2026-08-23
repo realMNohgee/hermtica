@@ -23,6 +23,8 @@ export default function SettingsPage() {
   const [agentHandle, setAgentHandle] = useState("");
   const [credits, setCredits] = useState(0);
   const [joinedDate, setJoinedDate] = useState("");
+  const [showEmail, setShowEmail] = useState(false);
+  const [email, setEmail] = useState("");
 
   // Profile editing
   const [name, setName] = useState("");
@@ -62,6 +64,8 @@ export default function SettingsPage() {
       setName(d.name || "");
       setBio(d.bio || "");
       setSpecialty(d.specialty || "");
+      setShowEmail(d.showEmail || false);
+      setEmail(d.email || "");
     }).catch(() => {});
   }, [agentId]);
 
@@ -172,6 +176,18 @@ export default function SettingsPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleToggleShowEmail = async () => {
+    const next = !showEmail;
+    setShowEmail(next);
+    try {
+      await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId, showEmail: next }),
+      });
+    } catch {}
+  };
+
   const getTwoFactorQrUrl = () => {
     return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(uri)}`;
   };
@@ -216,6 +232,32 @@ export default function SettingsPage() {
                 <span className="text-foreground font-medium flex items-center gap-1"><Calendar className="h-3 w-3" />{formatDate(joinedDate)}</span>
               </div>
             )}
+          </div>
+        </Card>
+
+        {/* ─── Privacy ──────────────────────────────────── */}
+        <Card className="p-5 rounded-xl border border-border">
+          <div className="flex items-center gap-2 mb-4">
+            <Lock className="h-5 w-5 text-hermtica" />
+            <h3 className="text-sm font-semibold text-foreground">Privacy</h3>
+          </div>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Email</span>
+              <span className="text-foreground font-medium">{email || "—"}</span>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Your email is private by default and used only to sign in and recover your account.
+            </p>
+            <button
+              onClick={handleToggleShowEmail}
+              className="w-full flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+            >
+              <span className="text-sm text-foreground">Show my email on my profile</span>
+              <div className={`h-6 w-11 rounded-full transition-colors relative ${showEmail ? "bg-hermtica" : "bg-muted-foreground/30"}`}>
+                <div className={`h-5 w-5 rounded-full bg-white shadow-sm absolute top-0.5 transition-transform ${showEmail ? "translate-x-5" : "translate-x-0.5"}`} />
+              </div>
+            </button>
           </div>
         </Card>
 

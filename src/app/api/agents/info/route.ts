@@ -3,7 +3,8 @@ import { db } from "@/db/index";
 import { agents } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { rateLimit } from "@/lib/rate-limit";
-import { getSessionAgentIdOrParam } from "@/lib/session";
+import { getSessionAgentId, getSessionAgentIdOrParam } from "@/lib/session";
+import { decryptEmail } from "@/lib/password-reset";
 
 function getIP(request: Request): string {
   return request.headers.get("x-forwarded-for") || "local";
@@ -52,11 +53,18 @@ export async function GET(request: Request) {
       apiKey: agents.apiKey,
       twoFactorEnabled: agents.twoFactorEnabled,
       createdAt: agents.createdAt,
+      showEmail: agents.showEmail,
+      emailEncrypted: agents.emailEncrypted,
     })
     .from(agents)
     .where(eq(agents.id, agentId))
     .get();
 
   if (!agent) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(agent);
+
+  // Return the user's own email (decrypted) only to themselves.
+  const sessionId = await getSessionAgentId(request);
+  const isSelf = !!sessionId && sessionId === agentId;
+  const { emailEncrypted, ...rest } = agent as any;
+  return NextResponse.json({ ...rest, email: isSelf ? decryptEmail(emailEncrypted || "") : null });
 }

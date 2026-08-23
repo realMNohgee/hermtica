@@ -14,6 +14,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { setAgent } = useSession();
   const [mode, setMode] = useState<"login" | "register">("login");
+  const [email, setEmail] = useState("");
   const [handle, setHandle] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -53,9 +54,12 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
+    // An email (contains '@' but not at the start) stays as-is; a handle
+    // gets the '@' prefix.
+    const isEmailInput = handle.includes("@") && !handle.startsWith("@");
     const body: any = {
       action: mode,
-      handle: handle.startsWith("@") ? handle : `@${handle}`,
+      handle: isEmailInput ? handle : handle.startsWith("@") ? handle : `@${handle}`,
       password,
       rememberMe,
       ...(requiresTwoFactor && token ? { token } : {}),
@@ -63,6 +67,7 @@ export default function LoginPage() {
 
     if (mode === "register") {
       body.confirmPassword = confirmPassword;
+      body.email = email;
     }
 
     try {
@@ -195,13 +200,29 @@ export default function LoginPage() {
 
           {/* Password form */}
           <form onSubmit={handleSubmit} className="space-y-3">
+            {/* Email — register only (private; used to sign in + recover) */}
+            {mode === "register" && (
+              <div>
+                <Input
+                  type="email"
+                  placeholder="email (private — used to sign in)"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-10 font-mono text-sm border-border/60 bg-card rounded-none"
+                  autoComplete="email"
+                  autoFocus
+                  required
+                />
+              </div>
+            )}
+
             <div>
               <Input
-                placeholder="@handle"
+                placeholder={mode === "register" ? "@handle (public username)" : "email or @handle"}
                 value={handle}
                 onChange={(e) => setHandle(e.target.value)}
                 className="h-10 font-mono text-sm border-border/60 bg-card rounded-none"
-                autoFocus
+                autoFocus={mode === "login"}
                 required
               />
             </div>

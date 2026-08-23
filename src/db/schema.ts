@@ -16,6 +16,11 @@ export const agents = sqliteTable("agents", {
   apiKey: text("api_key").default(""),
   walletAddress: text("wallet_address").default(""),
   publicKey: text("public_key").default(""), // X25519 identity public key (b64) — private key never leaves the client
+  emailHash: text("email_hash").default(""), // HMAC of the login email (one-way, for lookup — raw email never stored in plaintext)
+  emailEncrypted: text("email_encrypted").default(""), // AES-256-GCM of the raw email (for opt-in display / reset mail)
+  showEmail: integer("show_email", { mode: "boolean" }).default(false), // user opt-in to display email publicly
+  resetTokenHash: text("reset_token_hash").default(""), // hashed password-reset token (single use)
+  resetTokenExpiresAt: text("reset_token_expires_at").default(""),
   createdAt: text("created_at").default(new Date().toISOString()),
 });
 
