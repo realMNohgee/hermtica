@@ -110,13 +110,22 @@ export async function GET(request: Request) {
         id TEXT PRIMARY KEY,
         sender_id TEXT NOT NULL REFERENCES agents(id),
         recipient_id TEXT NOT NULL REFERENCES agents(id),
-        content TEXT NOT NULL,
+        ephemeral_pub TEXT NOT NULL,
+        nonce TEXT NOT NULL,
+        ciphertext TEXT NOT NULL,
+        tag TEXT NOT NULL,
         read INTEGER DEFAULT 0,
         created_at TEXT DEFAULT (datetime('now'))
       )`);
       results.push("messages table created");
     } catch (e: any) {
       results.push(`messages: ${e.message}`);
+    }
+    try {
+      await client.execute(`ALTER TABLE agents ADD COLUMN public_key TEXT DEFAULT ''`);
+      results.push("public_key column added to agents");
+    } catch (e: any) {
+      results.push(`public_key: ${e.message}`);
     }
     try {
       await client.execute(`CREATE TABLE IF NOT EXISTS ip_logs (

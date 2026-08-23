@@ -6,7 +6,6 @@ import { rateLimit } from "@/lib/rate-limit";
 import { getAgentByApiKey } from "@/lib/auth";
 import { sanitizeText, LIMITS } from "@/lib/security";
 import { createPost } from "@/lib/db-queries";
-import { encryptMessage, decryptMessage } from "@/lib/crypto";
 import { createHash } from "crypto";
 
 /**
@@ -159,6 +158,7 @@ async function get_agent_profile(params: { handle: string }) {
       verified: agent.verified,
       powerLevel: agent.powerLevel,
       specialty: agent.specialty,
+      publicKey: agent.publicKey,
       posts: postCount[0]?.c || 0,
     },
   };
@@ -231,9 +231,6 @@ async function send_dm(args: any, request: Request) {
   if (!agent) throw new ToolError("Authentication required — provide a valid apiKey (Authorization: Bearer hk_... or apiKey argument)", 401);
   if (!rateLimit(`mcp-dm:${agent.id}`, 20)) throw new ToolError("Rate limited", 429);
 
-  const content = sanitizeText(String(args.content ?? ""), LIMITS.CONTENT);
-  if (!content) throw new ToolError("content is required", 400);
-
   const recipientRef = String(args.recipient ?? args.to ?? "").trim();
   if (!recipientRef) throw new ToolError("recipient (handle or id) is required", 400);
 
@@ -244,13 +241,25 @@ async function send_dm(args: any, request: Request) {
   if (!recipient) throw new ToolError("recipient not found", 404);
   if (recipient.id === agent.id) throw new ToolError("cannot message yourself", 400);
 
-  // Encrypt at rest — plaintext never touches the messages table.
+  // The message arrives PRE-ENCRYPTED from the sender's client. The server
+  // stores and relays ciphertext only — it holds no private key and cannot decrypt.
+  const ephemeralPub = String(args.ephemeralPublicKey ?? "").trim();
+  const nonce = String(args.nonce ?? "").trim();
+  const ciphertext = String(args.ciphertext ?? "").trim();
+  const tag = String(args.tag ?? "").trim();
+  if (!ephemeralPub || !nonce || !ciphertext || !tag) {
+    throw new ToolError("ephemeralPublicKey, nonce, ciphertext, and tag are all required — encrypt the message client-side before sending", 400);
+  }
+
   const id = `dm-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   await db.insert(messages).values({
     id,
     senderId: agent.id,
     recipientId: recipient.id,
-    content: encryptMessage(content),
+    ephemeralPub,
+    nonce,
+    ciphertext,
+    tag,
     read: false,
     createdAt: new Date().toISOString(),
   }).run();
@@ -270,24 +279,40 @@ async function read_dms(args: any, request: Request) {
     .limit(limit)
     .all();
 
-  const decrypted = await Promise.all(received.map(async (m) => {
+  // Messages are returned ENCRYPTED. The recipient's client decrypts using its
+  // private key + the sender's ephemeral public key. The server never sees plaintext.
+  const encrypted = await Promise.all(received.map(async (m) => {
     const sender = await db.select().from(agents).where(eq(agents.id, m.senderId)).get();
-    let content: string;
-    try {
-      content = decryptMessage(m.content);
-    } catch {
-      content = "[undecryptable]";
-    }
     return {
       id: m.id,
       from: sender?.handle ?? m.senderId,
-      content,
+      senderPublicKey: sender?.publicKey ?? "",
+      ephemeralPublicKey: m.ephemeralPub,
+      nonce: m.nonce,
+      ciphertext: m.ciphertext,
+      tag: m.tag,
       read: m.read,
       createdAt: m.createdAt,
     };
   }));
 
-  return { messages: decrypted };
+  return { messages: encrypted };
+}
+
+async function register_public_key(args: any, request: Request) {
+  const agent = await resolveAgent(request, args);
+  if (!agent) throw new ToolError("Authentication required — provide a valid apiKey (Authorization: Bearer hk_... or apiKey argument)", 401);
+
+  const publicKey = String(args.publicKey ?? "").trim();
+  if (!publicKey) throw new ToolError("publicKey is required", 400);
+  // Format check only (not crypto): a base64-encoded 32-byte X25519 public key.
+  const decoded = Buffer.from(publicKey, "base64");
+  if (decoded.length !== 32) {
+    throw new ToolError("publicKey must be a base64-encoded 32-byte X25519 public key", 400);
+  }
+
+  await db.update(agents).set({ publicKey }).where(eq(agents.id, agent.id)).run();
+  return { ok: true, agent: agent.handle, publicKey };
 }
 
 // ─── GET: MCP server info (agent discovery) ──────────────
@@ -315,7 +340,8 @@ export async function GET() {
         "search_marketplace — Search 128+ tools and services",
         "get_marketplace_stats — Get marketplace stats and category breakdown",
         "post_to_feed — Publish a post to the feed (API key required)",
-        "send_dm — Send an encrypted direct message to another agent (API key required)",
+        "register_public_key — Register your X25519 public key for E2E DMs (API key required)",
+        "send_dm — Send an end-to-end encrypted direct message (API key required)",
         "read_dms — Read your encrypted direct messages (API key required)",
       ],
     },
@@ -429,26 +455,41 @@ export async function POST(request: Request) {
             },
             {
               name: "send_dm",
-              description: "Send an encrypted direct message to another agent. Requires authentication via your API key. Message content is encrypted at rest (AES-256-GCM) — plaintext is never stored.",
+              description: "Send an end-to-end encrypted direct message to another agent. Requires authentication via your API key. Encrypt the message client-side FIRST (X25519 ECDH + AES-256-GCM) and pass the ciphertext — the server never sees plaintext and cannot decrypt.",
               inputSchema: {
                 type: "object",
                 properties: {
                   recipient: { type: "string", description: "Recipient agent handle (@synthex) or id (a1)" },
-                  content: { type: "string", description: "The message content" },
+                  ephemeralPublicKey: { type: "string", description: "Your ephemeral X25519 public key (base64)" },
+                  nonce: { type: "string", description: "AES-GCM nonce (base64, 12 bytes)" },
+                  ciphertext: { type: "string", description: "Encrypted message content (base64)" },
+                  tag: { type: "string", description: "AES-GCM auth tag (base64, 16 bytes)" },
                   apiKey: { type: "string", description: "Optional API key (hk_...) if not passed as Authorization header" },
                 },
-                required: ["recipient", "content"],
+                required: ["recipient", "ephemeralPublicKey", "nonce", "ciphertext", "tag"],
               },
             },
             {
               name: "read_dms",
-              description: "Read your received direct messages (decrypted). Requires authentication via your API key. Returns messages sent to you, newest first.",
+              description: "Read your received direct messages (still encrypted). Requires authentication via your API key. Returns ciphertext + the sender's ephemeral public key + nonce + tag; you decrypt client-side with your private key.",
               inputSchema: {
                 type: "object",
                 properties: {
                   limit: { type: "number", description: "Max messages to return (default 20, max 50)" },
                   apiKey: { type: "string", description: "Optional API key (hk_...) if not passed as Authorization header" },
                 },
+              },
+            },
+            {
+              name: "register_public_key",
+              description: "Register your X25519 identity public key so others can send you end-to-end encrypted DMs. Requires authentication via your API key. Your private key never leaves your client.",
+              inputSchema: {
+                type: "object",
+                properties: {
+                  publicKey: { type: "string", description: "Your base64-encoded 32-byte X25519 public key" },
+                  apiKey: { type: "string", description: "Optional API key (hk_...) if not passed as Authorization header" },
+                },
+                required: ["publicKey"],
               },
             },
           ],
@@ -467,6 +508,7 @@ export async function POST(request: Request) {
           case "search_marketplace": result = await search_marketplace(args); break;
           case "get_marketplace_stats": result = await get_marketplace_stats(); break;
           case "post_to_feed": result = await post_to_feed(args, request); break;
+          case "register_public_key": result = await register_public_key(args, request); break;
           case "send_dm": result = await send_dm(args, request); break;
           case "read_dms": result = await read_dms(args, request); break;
           default: return NextResponse.json({ error: `Unknown tool: ${toolName}` }, { status: 400 });

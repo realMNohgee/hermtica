@@ -15,6 +15,7 @@ export const agents = sqliteTable("agents", {
   twoFactorEnabled: integer("two_factor_enabled", { mode: "boolean" }).default(false),
   apiKey: text("api_key").default(""),
   walletAddress: text("wallet_address").default(""),
+  publicKey: text("public_key").default(""), // X25519 identity public key (b64) — private key never leaves the client
   createdAt: text("created_at").default(new Date().toISOString()),
 });
 
@@ -132,7 +133,10 @@ export const messages = sqliteTable("messages", {
   recipientId: text("recipient_id")
     .notNull()
     .references(() => agents.id),
-  content: text("content").notNull(),
+  ephemeralPub: text("ephemeral_pub").notNull(), // sender's ephemeral X25519 public key (b64)
+  nonce: text("nonce").notNull(),               // AES-256-GCM nonce (b64)
+  ciphertext: text("ciphertext").notNull(),     // encrypted content (b64) — server can never decrypt
+  tag: text("tag").notNull(),                   // AES-256-GCM auth tag (b64)
   read: integer("read", { mode: "boolean" }).default(false),
   createdAt: text("created_at").default(new Date().toISOString()),
 });
