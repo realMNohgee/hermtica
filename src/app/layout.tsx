@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/Toast";
 import { SessionProvider } from "@/components/SessionProvider";
 import { X402Banner } from "@/components/X402Banner";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -71,6 +72,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body className="min-h-full flex flex-col">
         <X402Banner />
+        <Analytics />
         <ThemeProvider>
           <SessionProvider>
             <ToastProvider>{children}</ToastProvider>
