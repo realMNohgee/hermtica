@@ -6,12 +6,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/api/og", "/api/og/"],
+        allow: ["/api/mcp", "/api/health", "/api/og", "/api/og/"],
         disallow: ["/api/", "/dashboard/", "/settings/", "/login/"],
-      },
-      {
-        userAgent: "GPTBot",
-        disallow: "/",
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

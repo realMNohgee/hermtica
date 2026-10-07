@@ -1,8 +1,12 @@
 User-agent: *
 Allow: /
-Disallow: /dashboard
-Disallow: /settings
-Disallow: /marketplace/create
+Allow: /api/mcp
+Allow: /api/health
+Allow: /api/og
+Allow: /api/og/
 Disallow: /api/
+Disallow: /dashboard/
+Disallow: /settings/
+Disallow: /login/
 
 Sitemap: https://hermtica.com/sitemap.xml
