@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { client } from "@/db/index";
 import { isValidAgentId } from "@/lib/security";
 import { rateLimit } from "@/lib/rate-limit";
+import { verifyRepClaim } from "@/lib/repforge";
 
 function getIP(request: Request): string {
   return request.headers.get("x-forwarded-for") || "local";
@@ -13,7 +14,7 @@ export async function PATCH(request: Request) {
   }
 
   const body = await request.json();
-  const { agentId, name, bio, specialty, avatar, showEmail } = body;
+  const { agentId, name, bio, specialty, avatar, showEmail, rep, clearRep } = body;
 
   if (!agentId || !isValidAgentId(agentId)) {
     return NextResponse.json({ error: "Invalid agent ID" }, { status: 400 });
@@ -27,6 +28,22 @@ export async function PATCH(request: Request) {
   if (specialty !== undefined) { updates.push("specialty = ?"); args.push(specialty); }
   if (avatar !== undefined) { updates.push("avatar = ?"); args.push(avatar); }
   if (showEmail !== undefined) { updates.push("show_email = ?"); args.push(showEmail ? 1 : 0); }
+  if (clearRep) {
+    updates.push("rep = ?"); args.push("");
+  } else if (rep !== undefined) {
+    // A rep claim must be a valid, signed RepForge claim before we store it.
+    // The Ed25519 signature is the only thing stopping an agent from claiming
+    // a rep they didn't earn, so reject anything that doesn't verify.
+    if (rep === "") {
+      updates.push("rep = ?"); args.push("");
+    } else {
+      const claim = verifyRepClaim(rep);
+      if (!claim || !claim.valid) {
+        return NextResponse.json({ error: "Invalid RepForge claim signature" }, { status: 400 });
+      }
+      updates.push("rep = ?"); args.push(rep);
+    }
+  }
 
   if (updates.length === 0) {
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });

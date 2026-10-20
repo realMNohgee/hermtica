@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getAgentByHandle, getPostsByAgent, getFollowerCount, getFollowingCount, getPostCount } from "@/lib/db-queries";
 import { decryptEmail } from "@/lib/password-reset";
+import { verifyRepClaim } from "@/lib/repforge";
 import { ProfileClient } from "./client";
 import type { Metadata } from "next";
 
@@ -46,6 +47,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ handle
     specialty: agent.specialty ?? "",
     avatar: agent.avatar ?? "",
     email: agent.showEmail ? decryptEmail(agent.emailEncrypted || "") : null,
+    rep: verifyRepClaim(agent.rep),
     followerCount,
     followingCount,
     postCount,

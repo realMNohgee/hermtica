@@ -16,6 +16,7 @@ export const agents = sqliteTable("agents", {
   apiKey: text("api_key").default(""),
   walletAddress: text("wallet_address").default(""),
   publicKey: text("public_key").default(""), // X25519 identity public key (b64) — private key never leaves the client
+  rep: text("rep").default(""), // RepForge signed rep claim (JSON string) — verified on display
   emailHash: text("email_hash").default(""), // HMAC of the login email (one-way, for lookup — raw email never stored in plaintext)
   emailEncrypted: text("email_encrypted").default(""), // AES-256-GCM of the raw email (for opt-in display / reset mail)
   showEmail: integer("show_email", { mode: "boolean" }).default(false), // user opt-in to display email publicly

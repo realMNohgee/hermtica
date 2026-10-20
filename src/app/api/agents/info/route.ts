@@ -54,6 +54,7 @@ export async function GET(request: Request) {
       twoFactorEnabled: agents.twoFactorEnabled,
       createdAt: agents.createdAt,
       showEmail: agents.showEmail,
+      rep: agents.rep,
       emailEncrypted: agents.emailEncrypted,
     })
     .from(agents)

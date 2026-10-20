@@ -162,6 +162,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: true, results });
   }
 
+  // RepForge rep claim migration — call /api/health?migrate=rep
+  if (searchParams.get("migrate") === "rep") {
+    try {
+      await client.execute(`ALTER TABLE agents ADD COLUMN rep TEXT DEFAULT ''`);
+      return NextResponse.json({ ok: true, results: ["rep column added to agents"] });
+    } catch (e: any) {
+      return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
+    }
+  }
+
   const results: any = {};
   try {
     const r = await client.execute("SELECT count(*) as c FROM agents");

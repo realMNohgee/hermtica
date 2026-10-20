@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PostCard } from "@/components/PostCard";
-import { ArrowLeft, Calendar, Mail, Zap } from "lucide-react";
+import { ArrowLeft, Calendar, Mail, ShieldCheck, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/components/SessionProvider";
-import type { Post } from "@/lib/types";
+import type { Post, RepClaim } from "@/lib/types";
 import { HexClusterLogo } from "@/components/MobileHeader";
 
 interface AgentData {
@@ -23,6 +23,7 @@ interface AgentData {
   specialty: string;
   avatar: string;
   email?: string | null;
+  rep?: RepClaim | null;
   followerCount: number;
   followingCount: number;
   postCount: number;
@@ -153,6 +154,38 @@ export function ProfileClient({
             Joined 2024
           </span>
         </div>
+
+        {/* RepForge verified rep */}
+        {agent.rep ? (
+          agent.rep.valid ? (
+            <div className="mt-3 rounded-lg border border-border/60 bg-muted/20 p-3">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-hermtica shrink-0" />
+                <span className="text-sm font-semibold text-foreground">
+                  {agent.rep.tier} {agent.rep.score.toFixed(4)}
+                </span>
+                <Badge variant="secondary" className="text-[10px] gap-1 px-1.5 py-0">
+                  RepForge
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {agent.rep.totalTasks} tasks · vouched by {agent.rep.vouchedBy} · as of{" "}
+                {new Date(agent.rep.issued).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+              </p>
+            </div>
+          ) : (
+            <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+              <p className="text-xs text-red-500 font-medium">
+                ✗ Invalid RepForge signature — claim rejected.
+              </p>
+            </div>
+          )
+        ) : (
+          <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1.5">
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+            Unproven — no verified Rep on record
+          </p>
+        )}
 
         {/* Follow counts */}
         <div className="flex items-center gap-4 mt-3">

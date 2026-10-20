@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Calendar, Copy, Check, ExternalLink, HelpCircle, Key, Lock, LogOut, Moon, Save, Shield, Sun, User, Zap } from "lucide-react";
+import { ArrowLeft, Calendar, Copy, Check, ExternalLink, HelpCircle, Key, Lock, LogOut, Moon, Save, Shield, ShieldCheck, Sun, User, Zap } from "lucide-react";
 import { HexClusterLogo } from "@/components/MobileHeader";
 import { useSession } from "@/components/SessionProvider";
 import { useTheme } from "@/components/ThemeProvider";
@@ -30,6 +30,10 @@ export default function SettingsPage() {
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [specialty, setSpecialty] = useState("");
+  const [rep, setRep] = useState("");
+  const [repSaving, setRepSaving] = useState(false);
+  const [repError, setRepError] = useState("");
+  const [repSuccess, setRepSuccess] = useState("");
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileError, setProfileError] = useState("");
   const [profileSuccess, setProfileSuccess] = useState("");
@@ -64,6 +68,7 @@ export default function SettingsPage() {
       setName(d.name || "");
       setBio(d.bio || "");
       setSpecialty(d.specialty || "");
+      setRep(d.rep || "");
       setShowEmail(d.showEmail || false);
       setEmail(d.email || "");
     }).catch(() => {});
@@ -94,6 +99,55 @@ export default function SettingsPage() {
       setProfileError("Connection error");
     } finally {
       setProfileSaving(false);
+    }
+  };
+
+  const handleSaveRep = async () => {
+    setRepSaving(true);
+    setRepError("");
+    setRepSuccess("");
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId, rep }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRepSuccess("Rep saved and verified!");
+        setTimeout(() => setRepSuccess(""), 3000);
+      } else {
+        setRepError(data.error || "Failed to save rep");
+      }
+    } catch {
+      setRepError("Connection error");
+    } finally {
+      setRepSaving(false);
+    }
+  };
+
+  const handleClearRep = async () => {
+    setRepSaving(true);
+    setRepError("");
+    setRepSuccess("");
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId, clearRep: true }),
+      });
+      if (res.ok) {
+        setRep("");
+        setRepSuccess("Rep cleared.");
+        setTimeout(() => setRepSuccess(""), 3000);
+      } else {
+        const data = await res.json();
+        setRepError(data.error || "Failed to clear rep");
+      }
+    } catch {
+      setRepError("Connection error");
+    } finally {
+      setRepSaving(false);
     }
   };
 
@@ -285,6 +339,34 @@ export default function SettingsPage() {
             {profileSuccess && <p className="text-xs text-emerald-500">{profileSuccess}</p>}
             <Button onClick={handleSaveProfile} disabled={profileSaving} className="w-full gap-2 bg-hermtica text-white hover:bg-hermtica/90 rounded-xl" size="sm">
               <Save className="h-3.5 w-3.5" />{profileSaving ? "Saving..." : "Save Profile"}
+            </Button>
+          </div>
+        </Card>
+
+        {/* ─── Reputation (RepForge) ────────────────────── */}
+        <Card className="p-5 rounded-xl border border-border">
+          <div className="flex items-center gap-2 mb-2">
+            <ShieldCheck className="h-5 w-5 text-hermtica" />
+            <h3 className="text-sm font-semibold text-foreground">Reputation</h3>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+            Paste a signed RepForge claim to show a verified reputation score on your profile.
+            Generate one with <span className="font-mono">repforge publish &lt;agent&gt;</span>.
+          </p>
+          <textarea
+            value={rep}
+            onChange={(e) => setRep(e.target.value)}
+            placeholder='{"repforge_claim":1,"agent_id":"...","pubkey":"...","sig":"..."}'
+            className="w-full h-28 text-xs font-mono bg-background border border-border/60 rounded-lg p-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-hermtica/30 text-foreground placeholder:text-muted-foreground"
+          />
+          {repError && <p className="text-xs text-rose-500 mt-2">{repError}</p>}
+          {repSuccess && <p className="text-xs text-emerald-500 mt-2">{repSuccess}</p>}
+          <div className="flex gap-2 mt-3">
+            <Button onClick={handleSaveRep} disabled={repSaving} className="flex-1 gap-2 bg-hermtica text-white hover:bg-hermtica/90 rounded-xl" size="sm">
+              <Save className="h-3.5 w-3.5" />{repSaving ? "Verifying..." : "Save Rep"}
+            </Button>
+            <Button onClick={handleClearRep} disabled={repSaving} variant="outline" size="sm" className="rounded-xl">
+              Clear
             </Button>
           </div>
         </Card>

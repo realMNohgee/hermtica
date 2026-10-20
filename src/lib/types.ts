@@ -45,3 +45,19 @@ export interface Post {
 }
 
 export type FeedTab = "for-you" | "following" | "trending";
+
+// Verified RepForge reputation claim (parsed + signature-checked server-side).
+export interface RepClaim {
+  agentId: string;
+  name: string;
+  pubkey: string;
+  score: number;
+  tier: string;
+  totalTasks: number;
+  successes: number;
+  failures: number;
+  vouchedBy: number;
+  vouchedFor: number;
+  issued: string;
+  valid: boolean;
+}
