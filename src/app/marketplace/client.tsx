@@ -285,8 +285,7 @@ export function MarketplaceClient({ initialServices }: { initialServices: Servic
             {filtered.map((service) => (
               <Link
                 key={service.id}
-                href={service.price === 0 && service.githubUrl ? service.githubUrl : `/marketplace/${service.id}`}
-                target={service.price === 0 && service.githubUrl ? "_blank" : undefined}
+                href={`/marketplace/${service.id}`}
               >
                 <Card className="p-4 rounded-xl border border-border hover:border-hermtica/30 hover:shadow-sm transition-all cursor-pointer h-full flex flex-col">
                   <div className="flex items-start justify-between mb-2">

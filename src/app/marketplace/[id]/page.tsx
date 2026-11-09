@@ -68,6 +68,52 @@ export default function ServiceDetailPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [avgRating, setAvgRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
+  const [newRating, setNewRating] = useState(0);
+  const [newContent, setNewContent] = useState("");
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  const [feedbackMsg, setFeedbackMsg] = useState("");
+
+  const handleSubmitFeedback = async () => {
+    if (!service || newRating < 1 || newRating > 5) return;
+    if (!newContent.trim()) {
+      setFeedbackMsg("Please write a short comment.");
+      return;
+    }
+    setSubmittingFeedback(true);
+    setFeedbackMsg("");
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          serviceId: service.id,
+          rating: newRating,
+          content: newContent.trim(),
+          agentId: "agent-1",
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setFeedbackMsg("Thanks, your feedback is live.");
+        setNewRating(0);
+        setNewContent("");
+        fetch(`/api/reviews?serviceId=${service.id}`)
+          .then((r) => r.json())
+          .then((d) => {
+            setReviews(d.reviews || []);
+            setAvgRating(d.averageRating || 0);
+            setTotalReviews(d.totalReviews || 0);
+          })
+          .catch(() => {});
+      } else {
+        setFeedbackMsg(data.error || "Couldn't submit. Try again.");
+      }
+    } catch {
+      setFeedbackMsg("Couldn't submit. Try again.");
+    } finally {
+      setSubmittingFeedback(false);
+    }
+  };
 
   useEffect(() => {
     fetch(`/api/services/${id}`)
@@ -351,16 +397,49 @@ export default function ServiceDetailPage() {
           </Card>
         )}
 
-        {/* Reviews */}
-        {reviews.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <h3 className="text-sm font-semibold text-foreground">Reviews</h3>
-              <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
-                {avgRating} · {totalReviews} {totalReviews === 1 ? "review" : "reviews"}
-              </span>
+        {/* Feedback: rate + comment on this tool, on-site */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="text-sm font-semibold text-foreground">Feedback</h3>
+            <span className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+              {avgRating} · {totalReviews} {totalReviews === 1 ? "review" : "reviews"}
+            </span>
+          </div>
+
+          <Card className="p-4 rounded-xl border border-border mb-4">
+            <p className="text-xs font-medium text-foreground mb-2">Rate this tool</p>
+            <div className="flex items-center gap-1 mb-3">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button key={star} onClick={() => setNewRating(star)} aria-label={`${star} star`} className="p-0.5">
+                  <Star className={cn("h-5 w-5 transition-colors", star <= newRating ? "fill-amber-500 text-amber-500" : "text-muted-foreground/30")} />
+                </button>
+              ))}
             </div>
+            <textarea
+              value={newContent}
+              onChange={(e) => setNewContent(e.target.value)}
+              placeholder="How did it work for your agent? Leave a short note."
+              rows={3}
+              className="w-full px-3 py-2 rounded-lg bg-muted/50 border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-hermtica/50 transition-colors resize-none mb-3"
+            />
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={handleSubmitFeedback}
+                disabled={submittingFeedback || newRating < 1}
+                className="gap-2 rounded-full bg-hermtica px-5 font-medium text-white hover:bg-hermtica/90 disabled:opacity-50"
+              >
+                {submittingFeedback ? "Submitting..." : "Submit feedback"}
+              </Button>
+              {feedbackMsg && (
+                <span className={cn("text-xs", feedbackMsg.startsWith("Thanks") ? "text-emerald-500" : "text-destructive")}>
+                  {feedbackMsg}
+                </span>
+              )}
+            </div>
+          </Card>
+
+          {reviews.length > 0 && (
             <div className="space-y-3">
               {reviews.map((review) => (
                 <Card key={review.id} className="p-4 rounded-xl border border-border">
@@ -403,8 +482,8 @@ export default function ServiceDetailPage() {
                 </Card>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

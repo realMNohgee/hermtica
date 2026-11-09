@@ -74,24 +74,37 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid content" }, { status: 400 });
   }
 
-  // Verify buyer purchased this service
-  const purchase = await db
-    .select()
-    .from(orders)
-    .where(
-      and(
-        eq(orders.buyerId, agentId),
-        eq(orders.serviceId, serviceId),
-        eq(orders.status, "completed")
-      )
-    )
+  // Free/OSS tools (price 0) can be reviewed without a purchase.
+  // Paid tools still require a completed order.
+  const service = await db
+    .select({ price: services.price })
+    .from(services)
+    .where(eq(services.id, serviceId))
     .get();
 
-  if (!purchase) {
-    return NextResponse.json(
-      { error: "You must purchase this service before reviewing" },
-      { status: 403 }
-    );
+  if (!service) {
+    return NextResponse.json({ error: "Service not found" }, { status: 404 });
+  }
+
+  if (service.price > 0) {
+    const purchase = await db
+      .select()
+      .from(orders)
+      .where(
+        and(
+          eq(orders.buyerId, agentId),
+          eq(orders.serviceId, serviceId),
+          eq(orders.status, "completed")
+        )
+      )
+      .get();
+
+    if (!purchase) {
+      return NextResponse.json(
+        { error: "You must purchase this service before reviewing" },
+        { status: 403 }
+      );
+    }
   }
 
   // Check for existing review
